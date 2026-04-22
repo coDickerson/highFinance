@@ -1,0 +1,127 @@
+import "dotenv/config";
+import { PrismaClient, Role, DuesStatus } from "../src/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcryptjs";
+
+const connectionString = (process.env.DIRECT_URL ?? process.env.DATABASE_URL)!;
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+const OFFICER_POSITIONS = [
+  { id: "dept-social",       name: "Psi (Social)",    description: "Social events & exchanges",   icon: "celebration",       colorHex: "#7B2D8B" },
+  { id: "dept-brotherhood",  name: "Brotherhood",     description: "Brotherhood activities",       icon: "people",            colorHex: "#1565C0" },
+  { id: "dept-rush",         name: "Rush",            description: "Recruitment & rush events",    icon: "directions_run",    colorHex: "#E65100" },
+  { id: "dept-housing",      name: "Housing",         description: "House maintenance & supplies", icon: "home",              colorHex: "#2E7D32" },
+  { id: "dept-kitchen",      name: "Kitchen",         description: "Kitchen & dining supplies",    icon: "restaurant",        colorHex: "#C62828" },
+  { id: "dept-iota",         name: "Iota",            description: "Iota committee activities",    icon: "star",              colorHex: "#F57F17" },
+  { id: "dept-risk",         name: "Risk",            description: "Risk management",              icon: "warning",           colorHex: "#AD1457" },
+  { id: "dept-sustain",      name: "Sustainability",  description: "Sustainability initiatives",   icon: "eco",               colorHex: "#00695C" },
+  { id: "dept-misc",         name: "Misc",            description: "Miscellaneous expenses",       icon: "more_horiz",        colorHex: "#546E7A" },
+  { id: "dept-emergency",    name: "Emergency",       description: "Emergency reserve fund",       icon: "emergency",         colorHex: "#B71C1C" },
+  { id: "dept-philo",        name: "Philo",           description: "Philanthropy & service",       icon: "volunteer_activism",colorHex: "#6A1B9A" },
+  { id: "dept-president",    name: "President",       description: "Presidential discretionary",   icon: "account_balance",   colorHex: "#004D40" },
+  { id: "dept-retreat",      name: "Retreat/Formal",  description: "Retreat & formal events",      icon: "event",             colorHex: "#1A237E" },
+  { id: "dept-im",           name: "IM",              description: "Intramural sports",            icon: "sports",            colorHex: "#33691E" },
+] as const;
+
+async function main() {
+  const HASH = async (pw: string) => bcrypt.hash(pw, 10);
+
+  // Clear old placeholder data in dependency order
+  await prisma.receipt.deleteMany();
+  await prisma.reimbursementRequest.deleteMany();
+  await prisma.transaction.deleteMany();
+  await prisma.budget.deleteMany();
+  await prisma.activityLog.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.signupRequest.deleteMany();
+  await prisma.department.deleteMany();
+  await prisma.income.deleteMany();
+  await prisma.member.deleteMany();
+
+  // Create the 14 officer positions
+  const depts: Record<string, { id: string }> = {};
+  for (const pos of OFFICER_POSITIONS) {
+    const d = await prisma.department.create({ data: pos });
+    depts[pos.id] = d;
+  }
+
+  // Admin user
+  const admin = await prisma.user.create({
+    data: {
+      name: "Treasurer (Admin)",
+      email: "admin@highfinance.test",
+      passwordHash: await HASH("Admin1234"),
+      role: Role.admin,
+    },
+  });
+
+  // Executive user (e.g., President or VP Finance)
+  await prisma.user.create({
+    data: {
+      name: "President (Exec)",
+      email: "exec@highfinance.test",
+      passwordHash: await HASH("Exec1234"),
+      role: Role.executive,
+    },
+  });
+
+  // One test officer per position
+  const officerSeeds = [
+    { dept: "dept-social",      email: "social@highfinance.test",      name: "Social Chair" },
+    { dept: "dept-brotherhood", email: "brotherhood@highfinance.test",  name: "Brotherhood Chair" },
+    { dept: "dept-rush",        email: "rush@highfinance.test",         name: "Rush Chair" },
+    { dept: "dept-housing",     email: "housing@highfinance.test",      name: "Housing Chair" },
+    { dept: "dept-kitchen",     email: "kitchen@highfinance.test",      name: "Kitchen Chair" },
+    { dept: "dept-iota",        email: "iota@highfinance.test",         name: "Iota Chair" },
+    { dept: "dept-risk",        email: "risk@highfinance.test",         name: "Risk Chair" },
+    { dept: "dept-sustain",     email: "sustainability@highfinance.test", name: "Sustainability Chair" },
+    { dept: "dept-misc",        email: "misc@highfinance.test",         name: "Misc Chair" },
+    { dept: "dept-emergency",   email: "emergency@highfinance.test",    name: "Emergency Chair" },
+    { dept: "dept-philo",       email: "philo@highfinance.test",        name: "Philanthropy Chair" },
+    { dept: "dept-president",   email: "president@highfinance.test",    name: "President" },
+    { dept: "dept-retreat",     email: "retreat@highfinance.test",      name: "Retreat/Formal Chair" },
+    { dept: "dept-im",          email: "im@highfinance.test",           name: "IM Chair" },
+  ];
+
+  for (const o of officerSeeds) {
+    await prisma.user.create({
+      data: {
+        name: o.name,
+        email: o.email,
+        passwordHash: await HASH("Officer1234"),
+        role: Role.officer,
+        departmentId: depts[o.dept].id,
+      },
+    });
+  }
+
+  // Seed a few example members with pledge class years as tier
+  const members = [
+    { id: "mem-1", name: "Alex Johnson",   email: "alex.j@test.com",   phone: "415-555-0101", tier: "FA24", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15") },
+    { id: "mem-2", name: "Marco Rivera",   email: "marco.r@test.com",  phone: "415-555-0202", tier: "FA24", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15") },
+    { id: "mem-3", name: "Tyler Chen",     email: "tyler.c@test.com",  phone: "415-555-0303", tier: "SP25", duesStatus: DuesStatus.overdue, lastPayment: new Date("2025-01-10") },
+    { id: "mem-4", name: "Jordan Park",    email: "jordan.p@test.com", phone: "415-555-0404", tier: "SP25", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15") },
+    { id: "mem-5", name: "Ethan Williams", email: "ethan.w@test.com",  phone: "415-555-0505", tier: "FA25", duesStatus: DuesStatus.overdue, lastPayment: null },
+    { id: "mem-6", name: "Liam Torres",    email: "liam.t@test.com",   phone: "415-555-0606", tier: "FA25", duesStatus: DuesStatus.exempt,  lastPayment: null },
+  ];
+
+  for (const m of members) {
+    await prisma.member.create({ data: m });
+  }
+
+  // Activity logs for admin
+  await prisma.activityLog.create({
+    data: { userId: admin.id, action: "login", ipAddress: "127.0.0.1", timestamp: new Date() },
+  });
+
+  console.log("✓ Seed complete");
+  console.log("  Admin:    admin@highfinance.test / Admin1234");
+  console.log("  Exec:     exec@highfinance.test / Exec1234");
+  console.log("  Officers: social@highfinance.test / Officer1234 (and 13 others)");
+  console.log("  Positions:", OFFICER_POSITIONS.map((p) => p.name).join(", "));
+}
+
+main()
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(() => prisma.$disconnect());
