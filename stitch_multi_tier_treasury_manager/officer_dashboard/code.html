@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Officer Dashboard - Fiscal Architect</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c4c6cf",
+                        "outline": "#74777f",
+                        "on-primary-fixed-variant": "#2e476f",
+                        "surface": "#faf9fd",
+                        "on-surface": "#1a1b1e",
+                        "inverse-primary": "#aec7f7",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2f3033",
+                        "on-primary-fixed": "#001b3d",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#44474e",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#aec7f7",
+                        "on-tertiary-container": "#eb851c",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e3e2e6",
+                        "tertiary": "#361900",
+                        "surface-tint": "#465f88",
+                        "secondary-container": "#93f4ac",
+                        "surface-dim": "#dad9dd",
+                        "surface-container-low": "#f4f3f7",
+                        "primary-container": "#1b365d",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "surface-variant": "#e3e2e6",
+                        "on-primary-container": "#87a0cd",
+                        "primary": "#002046",
+                        "on-secondary-container": "#007239",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1b1e",
+                        "on-secondary-fixed-variant": "#005228",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#7ada95",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb77d",
+                        "secondary": "#006d37",
+                        "surface-bright": "#faf9fd",
+                        "surface-container-high": "#e9e7eb",
+                        "primary-fixed": "#d6e3ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "background": "#faf9fd",
+                        "secondary-fixed": "#96f7af",
+                        "on-secondary-fixed": "#00210c",
+                        "surface-container": "#efedf1",
+                        "tertiary-container": "#552b00",
+                        "inverse-on-surface": "#f1f0f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Public Sans"],
+                        "label": ["Public Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Public Sans', sans-serif; }
+        h1, h2, h3, .font-manrope { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- SideNavBar (Shared Component) -->
+<aside class="flex flex-col h-screen py-8 border-r border-transparent bg-slate-100 dark:bg-slate-900 h-screen w-64 fixed left-0 top-0 z-40">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h2 class="font-manrope font-bold text-[#1B365D] dark:text-white leading-tight">Treasury Portal</h2>
+<p class="font-public-sans font-medium text-xs text-slate-500">Admin Access</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-6 py-3 transition-all duration-200 text-[#1B365D] dark:text-white font-bold border-r-4 border-[#1B365D] dark:border-blue-500 bg-white dark:bg-slate-950 translate-x-1" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+<span class="text-sm font-public-sans font-medium">Dashboard</span>
+</a>
+<a class="flex items-center px-6 py-3 transition-all text-slate-500 dark:text-slate-400 hover:text-[#1B365D] hover:bg-slate-50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined mr-3">account_balance_wallet</span>
+<span class="text-sm font-public-sans font-medium">Budgets</span>
+</a>
+<a class="flex items-center px-6 py-3 transition-all text-slate-500 dark:text-slate-400 hover:text-[#1B365D] hover:bg-slate-50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined mr-3">receipt_long</span>
+<span class="text-sm font-public-sans font-medium">Transactions</span>
+</a>
+<a class="flex items-center px-6 py-3 transition-all text-slate-500 dark:text-slate-400 hover:text-[#1B365D] hover:bg-slate-50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined mr-3">approval_delegation</span>
+<span class="text-sm font-public-sans font-medium">Requests</span>
+</a>
+</nav>
+<div class="px-4 mb-4">
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all active:scale-95 duration-150">
+<span class="material-symbols-outlined text-lg">add</span>
+<span class="text-sm">Universal Entry</span>
+</button>
+</div>
+<div class="mt-auto space-y-1">
+<a class="flex items-center px-6 py-3 transition-all text-slate-500 hover:text-[#1B365D] hover:bg-slate-50 dark:hover:bg-slate-800" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="text-sm font-public-sans font-medium">Settings</span>
+</a>
+<a class="flex items-center px-6 py-3 transition-all text-slate-500 hover:text-error hover:bg-error-container/20" href="#">
+<span class="material-symbols-outlined mr-3">logout</span>
+<span class="text-sm font-public-sans font-medium">Sign Out</span>
+</a>
+</div>
+</aside>
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar (Shared Component) -->
+<header class="flex justify-between items-center px-8 h-16 w-full sticky top-0 z-50 bg-slate-50/80 backdrop-blur-xl no-border">
+<div class="flex items-center gap-6">
+<h1 class="font-manrope font-extrabold tracking-tight text-[#1B365D] dark:text-white text-xl">Fiscal Architect</h1>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-slate-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary-container w-64 transition-all" placeholder="Search records..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200/50 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200/50 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">help</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200/50 transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined text-slate-500">settings</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-sm font-bold text-primary leading-none">Marcus Thorne</p>
+<p class="text-[10px] text-slate-500 font-medium">Project Officer</p>
+</div>
+<img alt="User profile avatar" class="w-9 h-9 rounded-full object-cover ring-2 ring-white" data-alt="Close-up portrait of a professional man in a tailored blazer against a clean studio background with soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC67W8RDSZEjt8tJUy98blVKaF3ZFBEs0PtUfy-_v84__T6QyjFfdm_oggKk5JhxSThwXBHRiBW3gQkn23fULAkT3E7mBU71It7Arqxw5jKzSB-yfNjpo1REL0DvRXOYj_Q6iF_9fBP0pkwlCm1R9PepBQLWF4KU-d76Xe5xo7cP6hsvs6BB8P-GNeYpdpxB0pZUj1fffw2gIojiN9crOzBo7niveTP8TtpJ7cEqsUuIOrl4iQw1wtpD2KTMQ-lr6ublYqmZRnSIB8"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content -->
+<div class="p-8 max-w-7xl mx-auto">
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+<!-- Primary Budget Card (Bento Item 1) -->
+<div class="lg:col-span-2 space-y-8">
+<div class="bg-surface-container-lowest rounded-xl p-8 relative overflow-hidden border-l-[6px] border-secondary">
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="text-xs font-bold font-label uppercase tracking-widest text-on-secondary-container bg-secondary-container px-3 py-1 rounded-full mb-3 inline-block">Current Allocation</span>
+<h3 class="font-manrope text-3xl font-extrabold text-primary">Community Outreach 2024</h3>
+</div>
+<span class="material-symbols-outlined text-primary/10 text-7xl absolute -top-4 -right-4 pointer-events-none select-none">account_balance_wallet</span>
+</div>
+<div class="grid grid-cols-2 gap-8 mb-8">
+<div>
+<p class="text-slate-500 text-sm font-medium mb-1">Available Balance</p>
+<p class="font-manrope text-4xl font-bold text-primary">$12,450.80</p>
+</div>
+<div class="text-right">
+<p class="text-slate-500 text-sm font-medium mb-1">Total Budget</p>
+<p class="font-manrope text-2xl font-bold text-slate-400">$45,000.00</p>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm font-bold">
+<span class="text-primary">28% Utilized</span>
+<span class="text-slate-400">$32,549.20 remaining</span>
+</div>
+<div class="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 28%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Transactions (Bento Item 2) -->
+<div class="bg-surface-container-lowest rounded-xl p-6">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-manrope text-xl font-bold text-primary">Recent Activity</h3>
+<button class="text-primary font-bold text-sm hover:underline flex items-center gap-1">
+                                View All Transactions
+                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Transaction 1 -->
+<div class="flex items-center justify-between p-4 hover:bg-surface-container-low rounded-lg transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-primary group-hover:bg-white transition-colors">
+<span class="material-symbols-outlined">shopping_bag</span>
+</div>
+<div>
+<p class="font-manrope font-bold text-on-surface">Event Supplies - Office Depot</p>
+<p class="text-xs text-on-surface-variant">Oct 24, 2023 • 14:32</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Approved</span>
+<p class="font-manrope font-bold text-on-surface">-$1,240.00</p>
+</div>
+</div>
+<!-- Transaction 2 -->
+<div class="flex items-center justify-between p-4 hover:bg-surface-container-low rounded-lg transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-primary group-hover:bg-white transition-colors">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<div>
+<p class="font-manrope font-bold text-on-surface">Catering: Board Meeting</p>
+<p class="text-xs text-on-surface-variant">Oct 22, 2023 • 09:15</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Pending</span>
+<p class="font-manrope font-bold text-on-surface">-$450.50</p>
+</div>
+</div>
+<!-- Transaction 3 -->
+<div class="flex items-center justify-between p-4 hover:bg-surface-container-low rounded-lg transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-primary group-hover:bg-white transition-colors">
+<span class="material-symbols-outlined">commute</span>
+</div>
+<div>
+<p class="font-manrope font-bold text-on-surface">Travel Reimbursement: SITE Conf</p>
+<p class="text-xs text-on-surface-variant">Oct 20, 2023 • 16:45</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Approved</span>
+<p class="font-manrope font-bold text-on-surface">-$280.00</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Actions & Templates -->
+<div class="space-y-8">
+<!-- Quick Actions -->
+<div class="bg-primary p-6 rounded-xl text-white shadow-xl shadow-primary/20">
+<h3 class="font-manrope text-lg font-bold mb-6">Quick Actions</h3>
+<div class="space-y-3">
+<button class="w-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-4 p-4 rounded-xl transition-all border border-white/10 active:scale-95">
+<span class="material-symbols-outlined bg-white/20 p-2 rounded-lg">upload_file</span>
+<span class="font-bold text-sm">Upload Receipt</span>
+</button>
+<button class="w-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-4 p-4 rounded-xl transition-all border border-white/10 active:scale-95">
+<span class="material-symbols-outlined bg-white/20 p-2 rounded-lg">payments</span>
+<span class="font-bold text-sm">Request Reimbursement</span>
+</button>
+<button class="w-full bg-white/10 hover:bg-white/20 text-white flex items-center gap-4 p-4 rounded-xl transition-all border border-white/10 active:scale-95">
+<span class="material-symbols-outlined bg-white/20 p-2 rounded-lg">edit_note</span>
+<span class="font-bold text-sm">Draft New Budget</span>
+</button>
+</div>
+</div>
+<!-- Budget Templates -->
+<div class="space-y-4">
+<h3 class="font-manrope text-xl font-bold text-primary px-2">Budget Templates</h3>
+<a class="block bg-surface-container-lowest p-5 rounded-xl hover:bg-primary-container group transition-all duration-300" href="#">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-primary group-hover:bg-white/20 group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">campaign</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-white transition-colors">open_in_new</span>
+</div>
+<h4 class="font-manrope font-bold text-primary group-hover:text-white mb-1">Marketing Campaign</h4>
+<p class="text-xs text-slate-500 group-hover:text-white/70">Standard allocation for digital and print media</p>
+</a>
+<a class="block bg-surface-container-lowest p-5 rounded-xl hover:bg-primary-container group transition-all duration-300" href="#">
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-primary group-hover:bg-white/20 group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">celebration</span>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-white transition-colors">open_in_new</span>
+</div>
+<h4 class="font-manrope font-bold text-primary group-hover:text-white mb-1">Seasonal Events</h4>
+<p class="text-xs text-slate-500 group-hover:text-white/70">Structured for venue, catering, and logistics</p>
+</a>
+<a class="block bg-surface-container-lowest p-5 rounded-xl hover:bg-primary-container group transition-all duration-300 border-2 border-dashed border-slate-200 flex items-center justify-center py-8" href="#">
+<div class="text-center">
+<span class="material-symbols-outlined text-slate-400 mb-2">add_circle</span>
+<p class="text-sm font-bold text-slate-400">Custom Template</p>
+</div>
+</a>
+</div>
+</div>
+</section>
+<!-- Bottom Insight Section -->
+<section class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col justify-between">
+<p class="text-xs font-bold text-slate-500 uppercase">Avg Response Time</p>
+<div class="mt-4">
+<h4 class="text-3xl font-manrope font-bold text-primary">4.2h</h4>
+<p class="text-[10px] text-secondary font-bold mt-1">↑ 12% faster than last month</p>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col justify-between">
+<p class="text-xs font-bold text-slate-500 uppercase">Pending Approvals</p>
+<div class="mt-4 flex items-center justify-between">
+<h4 class="text-3xl font-manrope font-bold text-primary">03</h4>
+<div class="flex -space-x-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full border-2 border-white" data-alt="Portrait of a young smiling professional woman in a business casual environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0QPv_gi8k0yDGsYj7ouOx5Qjo91btHdGayKi1IfEYyPV-ooNO8FN_fmu1p6gNGSNnYPagHNWskAJguUuxQCi7Ll_OYCPsl6KvsRqTGp7teXxV9k0alsOQt2s88-TJksCn7C_wrwz8BysxWD1liEyy495SX6xRDcyh9SynfzWzXdaLSGK1WQ2uZJTGXJnx6G5FAq4TYv6g6F6xZ2-QiXViGyPSrtBmDc_Mugv97oyjpiznniBP74ZbopiFGFLlWrftQ8drFVflyd0"/>
+<img alt="Avatar" class="w-6 h-6 rounded-full border-2 border-white" data-alt="Corporate portrait of a middle-aged man with glasses and a friendly expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgGRCkSqKG87y42BKG6KB4KjrbsLC5rfRC2f5cToT7288fVMXC-lbl3GxBeCcjDQ5fdSyPXU65AmwjhTX5A7zyXvNT59zYms9qd9FWP15NVZYH9Tda2NkoUJNhM8t4-ZVZewM_Yfmgo2G-WFRQsvVoT8ZLtTZ5VMaCPSw7BuAohbchjB6xmsYfXpYRq4slGlT8yMkZQElxPclSudaBrT25N1DE8ybV4pZyzfHufmKdKXJLCQzy_yRl9Z-9V4z69d6oSbVd9siG2Jc"/>
+<div class="w-6 h-6 rounded-full bg-slate-300 border-2 border-white flex items-center justify-center text-[8px] font-bold">+1</div>
+</div>
+</div>
+</div>
+<div class="md:col-span-2 relative rounded-xl overflow-hidden min-h-[160px] group">
+<img alt="Background" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Minimalist desk setup with financial reports, a digital tablet displaying charts, and a clean cup of espresso" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmlWQL9BcXNj2EQfcWsuk9s_K3vAFdyYbhowcIR_piEoG6a95-ssUYYBjUlMJdBOU5Ir4Ok438YLBm1u8Ai5osdClyI7QteXWSpvWLQk8JwMwr8wpcL-jDjbsTg7zR5c_os_1P8l9KKCGS5k1k0-jj2HDMJjTmbjueuYyLRakiTe00gNoa_pqT7aZBLh0uAjED8k30D2GzfGFKGz1V19DKJ31e8Hgojw_yvN1JfdwJyp4sHv_D0bl0yzDfO1BP2fPHPDJ1eJzS4fs"/>
+<div class="absolute inset-0 bg-primary/60 backdrop-blur-[2px] p-6 flex flex-col justify-center">
+<h4 class="font-manrope text-white text-xl font-bold mb-2">Quarterly Review Prepared</h4>
+<p class="text-white/80 text-xs mb-4">Your audit reports for Q3 have been automatically generated and are ready for signature.</p>
+<button class="w-max bg-white text-primary text-xs font-bold px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors">Review Reports</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

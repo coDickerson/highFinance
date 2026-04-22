@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fiscal Architect - Request Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c4c6cf",
+                        "outline": "#74777f",
+                        "on-primary-fixed-variant": "#2e476f",
+                        "surface": "#faf9fd",
+                        "on-surface": "#1a1b1e",
+                        "inverse-primary": "#aec7f7",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2f3033",
+                        "on-primary-fixed": "#001b3d",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#44474e",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#aec7f7",
+                        "on-tertiary-container": "#eb851c",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e3e2e6",
+                        "tertiary": "#361900",
+                        "surface-tint": "#465f88",
+                        "secondary-container": "#93f4ac",
+                        "surface-dim": "#dad9dd",
+                        "surface-container-low": "#f4f3f7",
+                        "primary-container": "#1b365d",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "surface-variant": "#e3e2e6",
+                        "on-primary-container": "#87a0cd",
+                        "primary": "#002046",
+                        "on-secondary-container": "#007239",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1b1e",
+                        "on-secondary-fixed-variant": "#005228",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#7ada95",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb77d",
+                        "secondary": "#006d37",
+                        "surface-bright": "#faf9fd",
+                        "surface-container-high": "#e9e7eb",
+                        "primary-fixed": "#d6e3ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "background": "#faf9fd",
+                        "secondary-fixed": "#96f7af",
+                        "on-secondary-fixed": "#00210c",
+                        "surface-container": "#efedf1",
+                        "tertiary-container": "#552b00",
+                        "inverse-on-surface": "#f1f0f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Public Sans"],
+                        "label": ["Public Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Public Sans', sans-serif; }
+        h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-100 dark:bg-slate-900 flex flex-col py-8 border-r border-transparent z-40">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<h2 class="font-manrope font-bold text-[#1B365D] dark:text-white leading-tight">Treasury Portal</h2>
+<p class="font-public-sans font-medium text-xs text-slate-500 uppercase tracking-widest">Admin Access</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-6 py-3 text-slate-500 dark:text-slate-400 hover:text-[#1B365D] dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="dashboard">dashboard</span>
+<span class="font-public-sans font-medium text-sm">Dashboard</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 dark:text-slate-400 hover:text-[#1B365D] dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-public-sans font-medium text-sm">Budgets</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 dark:text-slate-400 hover:text-[#1B365D] dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="receipt_long">receipt_long</span>
+<span class="font-public-sans font-medium text-sm">Transactions</span>
+</a>
+<a class="flex items-center px-6 py-3 text-[#1B365D] dark:text-white font-bold border-r-4 border-[#1B365D] dark:border-blue-500 bg-white dark:bg-slate-950 translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="approval_delegation">approval_delegation</span>
+<span class="font-public-sans font-medium text-sm">Requests</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 dark:text-slate-400 hover:text-[#1B365D] dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="analytics">analytics</span>
+<span class="font-public-sans font-medium text-sm">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1">
+<button class="mx-6 mb-4 w-52 py-2 bg-primary text-white rounded-lg font-public-sans text-sm font-semibold hover:bg-primary-container transition-colors shadow-sm">
+                Universal Entry
+            </button>
+<a class="flex items-center px-6 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="settings">settings</span>
+<span class="font-public-sans font-medium text-sm">Settings</span>
+</a>
+<a class="flex items-center px-6 py-3 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="logout">logout</span>
+<span class="font-public-sans font-medium text-sm">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Shell -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-8 h-16 w-full sticky top-0 z-30 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-64 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-high border-none rounded-full text-sm focus:ring-2 focus:ring-primary-container" placeholder="Search requests..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-outline">
+<button class="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors p-2 rounded-full"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors p-2 rounded-full"><span class="material-symbols-outlined" data-icon="help">help</span></button>
+<button class="hover:bg-slate-200/50 dark:hover:bg-slate-800/50 transition-colors p-2 rounded-full"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+</div>
+<div class="flex items-center gap-3 border-l border-outline-variant/30 pl-6">
+<div class="text-right">
+<p class="text-sm font-bold text-primary dark:text-white leading-none">Sarah Jenkins</p>
+<p class="text-xs text-outline font-medium">Head Treasurer</p>
+</div>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full bg-primary-fixed-dim" data-alt="close-up portrait of a professional woman with a friendly expression in a modern office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGnCXjjWgaMCcYBiKsaAh7OjX1PXSV9uiDaUCLHjdmxT_VjhEJ8NpOuDTCv0k2zgNb2jjyB8S9CMF2diHwAC62M_h2fynTAaO1uccNzjWC7i6gGTs1nQzCnOBgztmWVnJjOm-VlXqFX8QN4MKzlYtLXkcT8KOWQd4Tl-X21obX2qEXmyIA2oAbc48AFiSfMux1rTltT0toBoXQpQoFUlKSpzXq9V_bUYrLW5kAmG2RtMOpPM55CO0AC5xJJx-0iwIK4hDKG_8-jrQ"/>
+</div>
+</div>
+</header>
+<!-- Page Header & Filter Tabs -->
+<div class="p-8 pb-4">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div>
+<h1 class="text-4xl font-extrabold text-primary dark:text-white tracking-tight mb-2">Request Manager</h1>
+<p class="text-on-surface-variant font-body">Review and authorize financial disbursements and budget adjustments.</p>
+</div>
+<div class="flex bg-surface-container rounded-full p-1 self-start md:self-auto">
+<button class="px-6 py-2 rounded-full bg-surface-container-lowest text-primary font-bold shadow-sm transition-all text-sm">Pending (12)</button>
+<button class="px-6 py-2 rounded-full text-on-surface-variant font-medium hover:bg-surface-container-high transition-all text-sm">Approved</button>
+<button class="px-6 py-2 rounded-full text-on-surface-variant font-medium hover:bg-surface-container-high transition-all text-sm">Denied</button>
+</div>
+</div>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Inbox List (Col 1-5) -->
+<div class="col-span-12 lg:col-span-5 flex flex-col gap-4">
+<!-- Request Card 1 (Active/Selected) -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border-l-4 border-on-tertiary-container shadow-sm hover:surface-container transition-all cursor-pointer ring-2 ring-primary/5">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+<span class="material-symbols-outlined" data-icon="receipt">receipt</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Reimbursement</h4>
+<p class="text-xs text-on-surface-variant">Submitted by Alex Rivera • 2h ago</p>
+</div>
+</div>
+<span class="px-3 py-1 bg-tertiary-container text-on-tertiary-container rounded-full text-[10px] font-bold uppercase tracking-wider">Pending</span>
+</div>
+<div class="flex items-baseline gap-1 mb-4">
+<span class="text-2xl font-extrabold text-primary">$1,240.50</span>
+<span class="text-xs text-outline font-medium">USD</span>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 bg-secondary text-white py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle">check_circle</span> Approve
+                            </button>
+<button class="flex-1 bg-surface-container-high text-on-surface-variant py-2 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-error-container hover:text-error transition-all">
+<span class="material-symbols-outlined text-sm" data-icon="cancel">cancel</span> Deny
+                            </button>
+</div>
+</div>
+<!-- Request Card 2 -->
+<div class="bg-surface-container-low p-5 rounded-xl border-l-4 border-on-tertiary-container hover:bg-surface-container-lowest hover:shadow-sm transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Budget Increase</h4>
+<p class="text-xs text-on-surface-variant">Submitted by Morgan Lee • 5h ago</p>
+</div>
+</div>
+</div>
+<div class="flex items-baseline gap-1 mb-4">
+<span class="text-2xl font-extrabold text-primary">$5,000.00</span>
+<span class="text-xs text-outline font-medium">USD</span>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 bg-secondary/10 text-secondary py-2 rounded-lg font-bold text-sm hover:bg-secondary hover:text-white transition-all">Approve</button>
+<button class="flex-1 bg-surface-container-high text-on-surface-variant py-2 rounded-lg font-bold text-sm hover:bg-error-container hover:text-error transition-all">Deny</button>
+</div>
+</div>
+<!-- Request Card 3 -->
+<div class="bg-surface-container-low p-5 rounded-xl border-l-4 border-on-tertiary-container hover:bg-surface-container-lowest hover:shadow-sm transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+<span class="material-symbols-outlined" data-icon="receipt">receipt</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Reimbursement</h4>
+<p class="text-xs text-on-surface-variant">Submitted by Jamie Chen • 1d ago</p>
+</div>
+</div>
+</div>
+<div class="flex items-baseline gap-1 mb-4">
+<span class="text-2xl font-extrabold text-primary">$42.15</span>
+<span class="text-xs text-outline font-medium">USD</span>
+</div>
+<div class="flex gap-2">
+<button class="flex-1 bg-secondary/10 text-secondary py-2 rounded-lg font-bold text-sm hover:bg-secondary hover:text-white transition-all">Approve</button>
+<button class="flex-1 bg-surface-container-high text-on-surface-variant py-2 rounded-lg font-bold text-sm hover:bg-error-container hover:text-error transition-all">Deny</button>
+</div>
+</div>
+</div>
+<!-- Detail View (Col 6-12) -->
+<div class="col-span-12 lg:col-span-7 bg-surface-container-lowest rounded-2xl p-8 flex flex-col gap-8 shadow-sm h-fit">
+<div class="flex justify-between items-start border-b border-outline-variant/20 pb-6">
+<div class="flex gap-4">
+<img alt="Submitter Avatar" class="w-12 h-12 rounded-full bg-secondary-fixed-dim" data-alt="professional headshot of a smiling young man in a collared shirt with natural studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPNYk4B57RDGAmAshgDDlWAfhB-tUDVh4MLd-o8TEd2-2fRV7LK2LrrItRb3Hjcd2Gz3GcjqJ_SdZsekvYZmmE7bFVNEEpwhERX7zWnyCrweJ09JJpxtwFvXkS0MSPiZ6Wu66y1nzBmo9u2NlewNqUF1uPPMLuyV3KPwkWfb0R-SEJdUB9JBrad5ViKOqBeYV2YDZcoE0CW4BZhJP7z4OHsKoLPUbN8gxsb0UTRIyhQhRnAbpfws7G53SD1YMb9mxZNDP7UITWYiE"/>
+<div>
+<h3 class="text-xl font-bold text-on-surface">Alex Rivera</h3>
+<p class="text-sm text-on-surface-variant">Marketing Department • Senior Specialist</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-outline uppercase tracking-widest mb-1">Request ID</p>
+<p class="text-sm font-bold text-primary font-body">#TRE-992-042</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div>
+<p class="text-xs font-bold text-outline uppercase tracking-widest mb-2">Category</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-tertiary-container" data-icon="travel_explore">travel_explore</span>
+<p class="font-bold text-on-surface">Travel &amp; Entertainment</p>
+</div>
+</div>
+<div>
+<p class="text-xs font-bold text-outline uppercase tracking-widest mb-2">Associated Project</p>
+<p class="font-bold text-on-surface">Q3 Growth Initiative</p>
+</div>
+<div class="col-span-2">
+<p class="text-xs font-bold text-outline uppercase tracking-widest mb-2">Description</p>
+<p class="text-on-surface-variant leading-relaxed">Flight and accommodation for the Northeast Regional Conference. Travel date: Oct 12-14. All expenses within the standard corporate travel policy limits.</p>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-4">
+<p class="text-xs font-bold text-outline uppercase tracking-widest">Attached Receipts (2)</p>
+<button class="text-sm text-primary font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span> Download All
+                            </button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="group relative rounded-xl overflow-hidden bg-surface-container-high border border-outline-variant/20 h-48 cursor-zoom-in">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="high-quality scan of a detailed travel receipt showing line items, tax, and total amount on white thermal paper" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-R47-57f3RonS8xyOHE0YDlaWKyM1GYlNqm-j19CEIUFOPptgoXAmWKMhM2Q7BxT9y1FFqzXf840sJXYFuZONeYNjvinEqwguUuBSEDSQ4h8c-oPHsP6-BVMZaJJtDhQEkV4pMA7GPFYCj8yuSgdII6sErHA2s6tLGNv1wv79uK4LNxO5XH6SkYvrFH0L6qHM39dT8L9Pi4ORm3GWDz_muJY-qE6zU6Hq5nQSVFA2fQ8frWAA23fsbxzuD3zWRM-vc52ctKOO7RU"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="zoom_in">zoom_in</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-3 bg-slate-900/60 backdrop-blur-sm">
+<p class="text-white text-xs font-bold">flight_confirmation_992.pdf</p>
+</div>
+</div>
+<div class="group relative rounded-xl overflow-hidden bg-surface-container-high border border-outline-variant/20 h-48 cursor-zoom-in">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" data-alt="close-up photo of a restaurant receipt with handwritten tip and signature on a dark wooden table background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdi2CpebR-oLN6lZ8IY7wesTWsM73ZGyhx57CYkai0cJJv_Piw52AIy8L-QBJusI4doyK1izzUFy56Qe5XT0VbNQ-XuLKqxetvCTQ4fbszgCZ0dzSyAyauyIXfrCGSh5L34nbSv2G2SInctgMpX_1B0AFU6ahqkjEWttGo8-AiUCNEaBSUdiKvc3pr7IZcbFdKBNsM1ybv3K_lhV0JjAGRbwl_G_YPiGgcsuwWgnqYzC5AhFFfg99lGzEszbaqP-3bv1E07V6EI4o"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="zoom_in">zoom_in</span>
+</div>
+<div class="absolute bottom-0 left-0 right-0 p-3 bg-slate-900/60 backdrop-blur-sm">
+<p class="text-white text-xs font-bold">hotel_invoice_final.png</p>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-6 border-t border-outline-variant/20">
+<p class="text-xs font-bold text-outline uppercase tracking-widest mb-4">Add a Note (Internal Only)</p>
+<textarea class="w-full bg-surface-container-high border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-primary-container min-h-[100px]" placeholder="Add context for your decision or a message for the submitter..."></textarea>
+</div>
+<div class="flex gap-4">
+<button class="flex-1 bg-secondary text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-3 shadow-lg shadow-secondary/20 hover:scale-[0.98] transition-transform">
+                            Confirm Approval
+                        </button>
+<button class="px-8 bg-error-container text-error py-4 rounded-xl font-bold text-base hover:bg-error hover:text-white transition-all">
+                            Deny Request
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fiscal Architect - Executive Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c4c6cf",
+                        "outline": "#74777f",
+                        "on-primary-fixed-variant": "#2e476f",
+                        "surface": "#faf9fd",
+                        "on-surface": "#1a1b1e",
+                        "inverse-primary": "#aec7f7",
+                        "on-tertiary": "#ffffff",
+                        "inverse-surface": "#2f3033",
+                        "on-primary-fixed": "#001b3d",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#44474e",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#aec7f7",
+                        "on-tertiary-container": "#eb851c",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e3e2e6",
+                        "tertiary": "#361900",
+                        "surface-tint": "#465f88",
+                        "secondary-container": "#93f4ac",
+                        "surface-dim": "#dad9dd",
+                        "surface-container-low": "#f4f3f7",
+                        "primary-container": "#1b365d",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "surface-variant": "#e3e2e6",
+                        "on-primary-container": "#87a0cd",
+                        "primary": "#002046",
+                        "on-secondary-container": "#007239",
+                        "on-error-container": "#93000a",
+                        "on-background": "#1a1b1e",
+                        "on-secondary-fixed-variant": "#005228",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#7ada95",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb77d",
+                        "secondary": "#006d37",
+                        "surface-bright": "#faf9fd",
+                        "surface-container-high": "#e9e7eb",
+                        "primary-fixed": "#d6e3ff",
+                        "tertiary-fixed": "#ffdcc3",
+                        "background": "#faf9fd",
+                        "secondary-fixed": "#96f7af",
+                        "on-secondary-fixed": "#00210c",
+                        "surface-container": "#efedf1",
+                        "tertiary-container": "#552b00",
+                        "inverse-on-surface": "#f1f0f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Public Sans"],
+                        "label": ["Public Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; background-color: #faf9fd; color: #1a1b1e; }
+        .font-headline { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background">
+<!-- TopAppBar Execution -->
+<header class="flex justify-between items-center px-6 h-16 w-full sticky top-0 z-50 bg-slate-50/80 backdrop-blur-xl no-border bg-slate-100">
+<div class="flex items-center gap-8">
+<span class="font-manrope font-extrabold tracking-tight text-[#1B365D] text-xl">Fiscal Architect</span>
+<div class="hidden md:flex items-center bg-surface-container-high px-4 py-1.5 rounded-xl">
+<span class="material-symbols-outlined text-outline text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm font-body ml-2 w-64" placeholder="Search ledger..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-lg active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-lg active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-200/50 transition-colors rounded-lg active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<img alt="User profile avatar" class="w-8 h-8 rounded-full ml-2" data-alt="Professional portrait of a male corporate executive in a crisp white shirt with soft office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNWNRz-oTubgid-eQ1aNNEkysmReQegXIn0Bf1DqWeiQqZn8PLDJwN-KaT6o0KW20MUuRH9-T0B1ONhdyWNv7-5BDCtGa-5bEjfpdNmcBpLPLIWXsldq_kYz3PhQ7IYxme7pBd3vMIxhqD0xD6FYAn8QXt4b8BLejUIiBj4llLfgJ_mzt4MJ0xKam-hSmmv0oCvgYa1l0GQe-nI7wRKuiLSQdtALCT0umhq2A31kw8sF0SRXw8LqyrmPaBBIQGxtqGw0nvBUX_ptg"/>
+</div>
+</header>
+<!-- SideNavBar Execution -->
+<aside class="hidden md:flex flex-col h-screen py-8 border-r border-transparent h-screen w-64 fixed left-0 top-0 bg-slate-100 z-40 mt-16">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<div class="font-manrope font-bold text-[#1B365D]">Treasury Portal</div>
+<div class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Admin Access</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-[#1B365D] font-bold border-r-4 border-[#1B365D] bg-white translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-public-sans font-medium text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-[#1B365D] hover:bg-slate-50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-public-sans font-medium text-sm">Budgets</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-[#1B365D] hover:bg-slate-50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-public-sans font-medium text-sm">Transactions</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-[#1B365D] hover:bg-slate-50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="approval_delegation">approval_delegation</span>
+<span class="font-public-sans font-medium text-sm">Requests</span>
+</a>
+</nav>
+<div class="px-4 mb-4">
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Universal Entry
+            </button>
+</div>
+<div class="mt-auto space-y-1">
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-[#1B365D] hover:bg-slate-50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-public-sans font-medium text-sm">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-slate-500 hover:text-[#1B365D] hover:bg-slate-50 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-public-sans font-medium text-sm">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-64 p-8 min-h-screen">
+<div class="max-w-7xl mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
+<div>
+<h1 class="text-4xl font-headline font-extrabold tracking-tight text-primary mb-2">Executive Overview</h1>
+<p class="text-on-surface-variant font-body">Real-time treasury metrics for Fiscal Year 2024</p>
+</div>
+<div class="flex gap-4">
+<!-- Add Receipt Button -->
+<button class="group relative bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="receipt">receipt</span>
+                        Add Receipt
+                        <span class="material-symbols-outlined text-sm opacity-50" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Total Assets Bento Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<!-- Main Asset Card -->
+<div class="md:col-span-2 bg-gradient-to-br from-primary to-primary-container p-8 rounded-xl relative overflow-hidden text-white shadow-lg">
+<div class="relative z-10">
+<div class="text-on-primary-container font-label text-sm uppercase tracking-widest mb-2">Total Consolidated Assets</div>
+<div class="text-6xl font-headline font-bold mb-8">$4,285,920<span class="text-2xl text-on-primary-container">.42</span></div>
+<div class="flex gap-8">
+<div>
+<div class="text-xs text-on-primary-container mb-1">Liquid Cash</div>
+<div class="text-xl font-headline font-bold">$1.2M</div>
+</div>
+<div>
+<div class="text-xs text-on-primary-container mb-1">Committed</div>
+<div class="text-xl font-headline font-bold">$2.8M</div>
+</div>
+<div>
+<div class="text-xs text-on-primary-container mb-1">Pending Approval</div>
+<div class="text-xl font-headline font-bold">$285K</div>
+</div>
+</div>
+</div>
+<div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+</div>
+<!-- Quick Stats -->
+<div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div class="font-headline font-bold text-primary">Monthly Run Rate</div>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded-full text-[10px] font-bold">STABLE</span>
+</div>
+<div class="text-3xl font-headline font-bold text-on-surface">$142,500</div>
+<div class="mt-4 h-24 w-full flex items-end gap-1">
+<div class="flex-1 bg-primary-container/20 rounded-t-sm h-12"></div>
+<div class="flex-1 bg-primary-container/20 rounded-t-sm h-16"></div>
+<div class="flex-1 bg-primary-container/20 rounded-t-sm h-14"></div>
+<div class="flex-1 bg-primary-container/20 rounded-t-sm h-20"></div>
+<div class="flex-1 bg-primary-container rounded-t-sm h-24"></div>
+</div>
+<div class="mt-2 text-xs text-on-surface-variant font-label">Expenditure trend (Last 5 Months)</div>
+</div>
+</div>
+<!-- Budget Grid Section -->
+<div class="mb-6 flex items-center justify-between">
+<h2 class="text-xl font-headline font-bold text-primary">Department Budgets</h2>
+<button class="text-sm font-label text-primary font-bold hover:underline">View All Departments</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Marketing Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="font-headline font-bold text-on-surface text-lg">Marketing</div>
+<div class="text-xs text-on-surface-variant">Global Campaigns</div>
+</div>
+<div class="w-10 h-10 bg-secondary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="ads_click">ads_click</span>
+</div>
+</div>
+<div class="mb-4">
+<div class="flex justify-between text-xs font-label mb-1">
+<span class="text-on-surface-variant">Utilization</span>
+<span class="text-on-surface font-bold">64%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full">
+<div class="bg-secondary h-full rounded-full w-[64%]"></div>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Available</div>
+<div class="text-xl font-headline font-bold text-on-surface">$128,400</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Budget</div>
+<div class="text-sm font-headline font-medium text-outline">$350k</div>
+</div>
+</div>
+</div>
+<!-- Operations Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="font-headline font-bold text-on-surface text-lg">Operations</div>
+<div class="text-xs text-on-surface-variant">Logistics &amp; Infrastructure</div>
+</div>
+<div class="w-10 h-10 bg-primary-fixed rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="settings_suggest">settings_suggest</span>
+</div>
+</div>
+<div class="mb-4">
+<div class="flex justify-between text-xs font-label mb-1">
+<span class="text-on-surface-variant">Utilization</span>
+<span class="text-on-surface font-bold">89%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full">
+<div class="bg-primary-container h-full rounded-full w-[89%]"></div>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Available</div>
+<div class="text-xl font-headline font-bold text-on-surface">$82,100</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Budget</div>
+<div class="text-sm font-headline font-medium text-outline">$750k</div>
+</div>
+</div>
+</div>
+<!-- Events Card (Critical/Low) -->
+<div class="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="font-headline font-bold text-on-surface text-lg">Events</div>
+<div class="text-xs text-on-surface-variant">Corporate Summits</div>
+</div>
+<div class="w-10 h-10 bg-error-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-error-container" data-icon="event">event</span>
+</div>
+</div>
+<div class="mb-4">
+<div class="flex justify-between text-xs font-label mb-1">
+<span class="text-error font-bold">OVERAGE RISK</span>
+<span class="text-on-surface font-bold">98%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full">
+<div class="bg-error h-full rounded-full w-[98%]"></div>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Available</div>
+<div class="text-xl font-headline font-bold text-error">$4,200</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Budget</div>
+<div class="text-sm font-headline font-medium text-outline">$200k</div>
+</div>
+</div>
+</div>
+<!-- Engineering Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="font-headline font-bold text-on-surface text-lg">Engineering</div>
+<div class="text-xs text-on-surface-variant">R&amp;D and Product</div>
+</div>
+<div class="w-10 h-10 bg-tertiary-fixed rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="code">code</span>
+</div>
+</div>
+<div class="mb-4">
+<div class="flex justify-between text-xs font-label mb-1">
+<span class="text-on-surface-variant">Utilization</span>
+<span class="text-on-surface font-bold">42%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full">
+<div class="bg-on-tertiary-container h-full rounded-full w-[42%]"></div>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Available</div>
+<div class="text-xl font-headline font-bold text-on-surface">$695,200</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Budget</div>
+<div class="text-sm font-headline font-medium text-outline">$1.2M</div>
+</div>
+</div>
+</div>
+<!-- Legal Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-slate-400"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="font-headline font-bold text-on-surface text-lg">Legal</div>
+<div class="text-xs text-on-surface-variant">Compliance &amp; Patents</div>
+</div>
+<div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-600" data-icon="gavel">gavel</span>
+</div>
+</div>
+<div class="mb-4">
+<div class="flex justify-between text-xs font-label mb-1">
+<span class="text-on-surface-variant">Utilization</span>
+<span class="text-on-surface font-bold">15%</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full">
+<div class="bg-slate-400 h-full rounded-full w-[15%]"></div>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Available</div>
+<div class="text-xl font-headline font-bold text-on-surface">$425,000</div>
+</div>
+<div class="text-right">
+<div class="text-[10px] text-on-surface-variant uppercase font-bold tracking-tighter">Budget</div>
+<div class="text-sm font-headline font-medium text-outline">$500k</div>
+</div>
+</div>
+</div>
+<!-- Add Department Placeholder -->
+<div class="bg-surface-container-low border-2 border-dashed border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center group cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-outline" data-icon="add">add</span>
+</div>
+<div class="font-headline font-bold text-outline">New Department</div>
+<div class="text-xs text-outline-variant">Allocate fresh resources</div>
+</div>
+</div>
+<!-- Recent Transactions Table -->
+<div class="mt-12 bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<h2 class="text-xl font-headline font-bold text-primary">Pending Approvals</h2>
+<button class="bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                        Filter Ledger
+                    </button>
+</div>
+<div class="space-y-4">
+<!-- Transaction Row -->
+<div class="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="cloud">cloud</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Amazon Web Services</div>
+<div class="text-xs text-on-surface-variant font-label">Engineering • Sep 14, 2024</div>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<div class="font-headline font-bold text-on-surface">$12,450.00</div>
+<div class="text-[10px] text-on-surface-variant font-label uppercase">Debit</div>
+</div>
+<span class="px-4 py-1.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-[11px] font-bold uppercase tracking-wider">Pending Approval</span>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-primary">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Transaction Row -->
+<div class="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-low transition-colors group border-l-4 border-transparent">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="campaign">campaign</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Google Ads - Q4 Retargeting</div>
+<div class="text-xs text-on-surface-variant font-label">Marketing • Sep 12, 2024</div>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<div class="font-headline font-bold text-on-surface">$8,900.00</div>
+<div class="text-[10px] text-on-surface-variant font-label uppercase">Debit</div>
+</div>
+<span class="px-4 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-bold uppercase tracking-wider">Auto-Matched</span>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-primary">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Transaction Row -->
+<div class="flex items-center justify-between p-4 rounded-xl hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="travel_explore">travel_explore</span>
+</div>
+<div>
+<div class="font-bold text-on-surface">Delta Airlines - Board Retreat</div>
+<div class="text-xs text-on-surface-variant font-label">Operations • Sep 10, 2024</div>
+</div>
+</div>
+<div class="flex items-center gap-12">
+<div class="text-right">
+<div class="font-headline font-bold text-on-surface">$4,520.40</div>
+<div class="text-[10px] text-on-surface-variant font-label uppercase">Debit</div>
+</div>
+<span class="px-4 py-1.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-[11px] font-bold uppercase tracking-wider">Review Required</span>
+<button class="opacity-0 group-hover:opacity-100 p-2 text-primary">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-4 border-t border-surface-container-high text-sm font-bold text-primary-container hover:bg-surface-container-low transition-colors rounded-b-xl">
+                    Download Full Ledger Report (PDF)
+                </button>
+</div>
+</div>
+</main>
+<!-- FAB for Receipt Entry (Mobile) -->
+<div class="md:hidden fixed bottom-6 right-6 z-50">
+<button class="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</div>
+</body></html>
