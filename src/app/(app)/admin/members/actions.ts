@@ -30,17 +30,43 @@ export async function createMember(formData: FormData) {
   revalidatePath("/admin/members");
 }
 
-export async function updateDuesStatus(id: string, duesStatus: DuesStatus) {
+function computeStatus(
+  duesOwed: number,
+  duesPaid: number,
+  dueDate: Date | null,
+  isExempt: boolean
+): DuesStatus {
+  if (isExempt) return DuesStatus.exempt;
+  if (duesOwed > 0 && duesPaid >= duesOwed) return DuesStatus.paid;
+  if (duesPaid > 0 && duesPaid < duesOwed && dueDate && new Date() < dueDate) {
+    return DuesStatus.in_progress;
+  }
+  return DuesStatus.overdue;
+}
+
+export async function updateDuesAmounts(
+  id: string,
+  duesOwed: number,
+  duesPaid: number,
+  dueDate: string | null,
+  isExempt: boolean
+) {
   const session = await auth();
   if (!session || !hasMinRole(session.user.role, "admin")) {
     throw new Error("Unauthorized");
   }
 
+  const parsedDueDate = dueDate ? new Date(dueDate) : null;
+  const duesStatus = computeStatus(duesOwed, duesPaid, parsedDueDate, isExempt);
+
   await prisma.member.update({
     where: { id },
     data: {
+      duesOwed,
+      duesPaid,
+      dueDate: parsedDueDate,
       duesStatus,
-      lastPayment: duesStatus === "paid" ? new Date() : undefined,
+      ...(duesStatus === DuesStatus.paid ? { lastPayment: new Date() } : {}),
     },
   });
 

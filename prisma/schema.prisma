@@ -120,6 +120,9 @@ model Member {
   tier        String
   duesStatus  DuesStatus @default(overdue)
   lastPayment DateTime?
+  duesOwed    Decimal    @default(0) @db.Decimal(12, 2)
+  duesPaid    Decimal    @default(0) @db.Decimal(12, 2)
+  dueDate     DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -160,6 +163,7 @@ enum BudgetStatus {
 
 enum DuesStatus {
   paid
+  in_progress
   overdue
   exempt
 }

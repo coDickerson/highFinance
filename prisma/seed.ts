@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient, Role, DuesStatus } from "../src/generated/prisma/client";
+import { PrismaClient, Role, DuesStatus, Semester } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -96,14 +96,49 @@ async function main() {
     });
   }
 
+  // Seed SP26 + FA26 budgets for every officer position
+  const BUDGET_AMOUNTS: Record<string, number> = {
+    "dept-social":      3000,
+    "dept-brotherhood": 2000,
+    "dept-rush":        5000,
+    "dept-housing":     8000,
+    "dept-kitchen":     4000,
+    "dept-iota":        1500,
+    "dept-risk":        1000,
+    "dept-sustain":      800,
+    "dept-misc":         500,
+    "dept-emergency":   5000,
+    "dept-philo":       1200,
+    "dept-president":   2000,
+    "dept-retreat":     4000,
+    "dept-im":           600,
+  };
+
+  for (const pos of OFFICER_POSITIONS) {
+    const amount = BUDGET_AMOUNTS[pos.id] ?? 1000;
+    for (const [semester, year] of [["spring", 2026], ["fall", 2026]] as [string, number][]) {
+      const label = semester === "spring" ? "SP26" : "FA26";
+      await prisma.budget.create({
+        data: {
+          departmentId: depts[pos.id].id,
+          name: `${pos.name} ${label}`,
+          year,
+          semester: semester as Semester,
+          totalAmount: amount,
+          status: "active",
+        },
+      });
+    }
+  }
+
   // Seed a few example members with pledge class years as tier
   const members = [
-    { id: "mem-1", name: "Alex Johnson",   email: "alex.j@test.com",   phone: "415-555-0101", tier: "FA24", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15") },
-    { id: "mem-2", name: "Marco Rivera",   email: "marco.r@test.com",  phone: "415-555-0202", tier: "FA24", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15") },
-    { id: "mem-3", name: "Tyler Chen",     email: "tyler.c@test.com",  phone: "415-555-0303", tier: "SP25", duesStatus: DuesStatus.overdue, lastPayment: new Date("2025-01-10") },
-    { id: "mem-4", name: "Jordan Park",    email: "jordan.p@test.com", phone: "415-555-0404", tier: "SP25", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15") },
-    { id: "mem-5", name: "Ethan Williams", email: "ethan.w@test.com",  phone: "415-555-0505", tier: "FA25", duesStatus: DuesStatus.overdue, lastPayment: null },
-    { id: "mem-6", name: "Liam Torres",    email: "liam.t@test.com",   phone: "415-555-0606", tier: "FA25", duesStatus: DuesStatus.exempt,  lastPayment: null },
+    { id: "mem-1", name: "Alex Johnson",   email: "alex.j@test.com",   phone: "415-555-0101", tier: "FA24", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15"), duesOwed: 150, duesPaid: 150 },
+    { id: "mem-2", name: "Marco Rivera",   email: "marco.r@test.com",  phone: "415-555-0202", tier: "FA24", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15"), duesOwed: 150, duesPaid: 150 },
+    { id: "mem-3", name: "Tyler Chen",     email: "tyler.c@test.com",  phone: "415-555-0303", tier: "SP25", duesStatus: DuesStatus.overdue, lastPayment: new Date("2025-01-10"), duesOwed: 150, duesPaid:  75 },
+    { id: "mem-4", name: "Jordan Park",    email: "jordan.p@test.com", phone: "415-555-0404", tier: "SP25", duesStatus: DuesStatus.paid,    lastPayment: new Date("2025-08-15"), duesOwed: 150, duesPaid: 150 },
+    { id: "mem-5", name: "Ethan Williams", email: "ethan.w@test.com",  phone: "415-555-0505", tier: "FA25", duesStatus: DuesStatus.overdue, lastPayment: null,                  duesOwed: 150, duesPaid:   0 },
+    { id: "mem-6", name: "Liam Torres",    email: "liam.t@test.com",   phone: "415-555-0606", tier: "FA25", duesStatus: DuesStatus.exempt,  lastPayment: null,                  duesOwed:   0, duesPaid:   0 },
   ];
 
   for (const m of members) {

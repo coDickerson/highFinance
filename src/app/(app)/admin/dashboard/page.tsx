@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { SpendingToggleChart } from "@/components/ui/SpendingToggleChart";
-import { getCurrentSemester } from "@/lib/semester";
+import { getCurrentSemester, getCalendarYear } from "@/lib/semester";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -25,6 +25,26 @@ export default async function AdminDashboardPage() {
   if (!session || !hasMinRole(session.user.role, "admin")) redirect("/dashboard");
 
   const semester = getCurrentSemester();
+  const calYear = getCalendarYear();
+
+  const calYearBudgets = await prisma.budget.findMany({
+    where: { year: calYear.year },
+    include: { transactions: { where: { status: "approved" } } },
+  });
+
+  const calYearAllocated = calYearBudgets.reduce(
+    (sum, b) => sum + Number(b.totalAmount),
+    0
+  );
+  const calYearSpent = calYearBudgets.reduce(
+    (sum, b) =>
+      sum + b.transactions.reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
+    0
+  );
+  const calYearPct =
+    calYearAllocated > 0
+      ? Math.round((calYearSpent / calYearAllocated) * 100)
+      : 0;
 
   const [
     pendingCount,
@@ -147,12 +167,48 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
+      {/* Calendar Year Budget Hero */}
+      <Link
+        href="/budgets"
+        className="rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
+        style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+      >
+        <div className="flex items-start justify-between mb-1">
+          <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">
+            {calYear.label} Calendar Year Budget
+          </p>
+          <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+            SP{String(calYear.year).slice(2)} + FA{String(calYear.year).slice(2)}
+          </span>
+        </div>
+        <div className="flex items-end justify-between mb-4 mt-2">
+          <div>
+            <p className="text-white/50 text-xs mb-0.5">Total Allocated</p>
+            <p className="font-display text-4xl font-extrabold">{fmt(calYearAllocated)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-white/50 text-xs mb-0.5">Spent</p>
+            <p className="font-display text-2xl font-bold text-white/70">{fmt(calYearSpent)}</p>
+          </div>
+        </div>
+        <div className="w-full h-2 rounded-full bg-white/20 mb-2">
+          <div
+            className="h-full rounded-full bg-[var(--color-secondary-container)]"
+            style={{ width: `${Math.min(calYearPct, 100)}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-white/50">
+          <span>{calYearPct}% utilized · {fmt(calYearAllocated - calYearSpent)} remaining</span>
+          <span>{calYearBudgets.length} budget{calYearBudgets.length !== 1 ? "s" : ""} · View Budgets →</span>
+        </div>
+      </Link>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Dues Performance Hero */}
+        {/* Dues Performance */}
         <Link
           href="/admin/income"
           className="lg:col-span-2 rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
-          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+          style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)" }}
         >
           <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">
             {semester} Dues Performance
