@@ -35,7 +35,7 @@ export default async function AdminRequestsPage() {
         </p>
       </div>
       <div style={{ minHeight: "600px" }}>
-        <RequestManager requests={serialized} />
+        <RequestManager requests={serialized} isAdmin />
       </div>
     </div>
   );

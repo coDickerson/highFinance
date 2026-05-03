@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MetricCard } from "@/components/ui/MetricCard";
+import { getCurrentSemester } from "@/lib/semester";
 import Link from "next/link";
 function fmt(n: { toFixed?: (d: number) => string } | number | string) {
   return Number(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -12,6 +13,8 @@ function fmt(n: { toFixed?: (d: number) => string } | number | string) {
 export default async function OfficerDashboardPage() {
   const session = await auth();
   if (!session) redirect("/login");
+
+  const semester = getCurrentSemester();
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -53,7 +56,7 @@ export default async function OfficerDashboardPage() {
           Welcome back, {session.user.name?.split(" ")[0]}
         </h2>
         <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-          {user?.department?.name ?? "Your"} budget overview for FY2024
+          {user?.department?.name ?? "Your"} budget overview · {semester}
         </p>
       </div>
 
@@ -62,7 +65,7 @@ export default async function OfficerDashboardPage() {
         <div className="lg:col-span-2 space-y-5">
           {/* Current Allocation */}
           {budget ? (
-            <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6">
+            <Link href="/budgets" className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6 block hover:bg-[var(--color-surface-container-low)] transition-colors">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">
@@ -95,7 +98,7 @@ export default async function OfficerDashboardPage() {
                 <span>{utilPct}% Utilized</span>
                 <span>{fmt(available)} remaining</span>
               </div>
-            </div>
+            </Link>
           ) : (
             <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6">
               <p className="text-[var(--color-on-surface-variant)] text-sm">
@@ -167,7 +170,7 @@ export default async function OfficerDashboardPage() {
           {/* Quick Actions */}
           <div
             className="rounded-2xl p-5 space-y-3"
-            style={{ background: "linear-gradient(160deg, #002046 0%, #1b365d 100%)" }}
+            style={{ background: "linear-gradient(160deg, #000000 0%, #111111 100%)" }}
           >
             <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">
               Quick Actions

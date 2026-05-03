@@ -14,9 +14,27 @@ export default async function RequestsPage() {
   if (!session) redirect("/login");
 
   const isAdmin = hasMinRole(session.user.role, "admin");
+  const isExec = hasMinRole(session.user.role, "executive");
+
+  // Get user's department for officer filtering
+  const user = isExec
+    ? null
+    : await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { departmentId: true },
+      });
+
+  const where = isExec
+    ? {}
+    : {
+        OR: [
+          { submittedById: session.user.id },
+          ...(user?.departmentId ? [{ departmentId: user.departmentId }] : []),
+        ],
+      };
 
   const requests = await prisma.reimbursementRequest.findMany({
-    where: isAdmin ? {} : { submittedById: session.user.id },
+    where,
     orderBy: { createdAt: "desc" },
     include: {
       submittedBy: { select: { name: true } },
@@ -29,14 +47,19 @@ export default async function RequestsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
-            {isAdmin ? "All Reimbursement Requests" : "My Reimbursement Requests"}
+            {isExec ? "All Reimbursement Requests" : "My Reimbursement Requests"}
           </h2>
-          <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">{requests.length} total</p>
+          <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
+            {requests.length} total
+            {isAdmin && (
+              <> · <Link href="/admin/requests" className="text-[var(--color-primary)] hover:underline">Open Approval Manager →</Link></>
+            )}
+          </p>
         </div>
         <Link
           href="/requests/new"
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           New Reimbursement Request

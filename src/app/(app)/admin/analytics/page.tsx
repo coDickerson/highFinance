@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
-import { SpendingChart } from "@/components/ui/SpendingChart";
+import { StackedSpendingChart } from "@/components/ui/StackedSpendingChart";
 
 export default async function AnalyticsPage() {
   const session = await auth();
@@ -28,30 +28,57 @@ export default async function AnalyticsPage() {
   });
   const avgSession = Math.round((sessionLogs._avg.sessionDuration ?? 0) / 60);
 
-  // Spending trend
+  // Stacked spending by month + department
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-  const txByMonth = await prisma.transaction.findMany({
+  const txRaw = await prisma.transaction.findMany({
     where: { date: { gte: sixMonthsAgo }, status: "approved" },
-    select: { date: true, amount: true },
+    select: {
+      date: true,
+      amount: true,
+      budget: {
+        include: { department: { select: { id: true, name: true, colorHex: true } } },
+      },
+    },
   });
-  const monthlyMap: Record<string, number> = {};
-  for (const tx of txByMonth) {
-    const key = new Date(tx.date).toLocaleDateString("en-US", { month: "short" }).toUpperCase();
-    monthlyMap[key] = (monthlyMap[key] ?? 0) + Math.abs(Number(tx.amount));
+
+  // Build dept metadata and month→dept→amount map
+  const deptMetaMap: Record<string, { name: string; colorHex: string }> = {};
+  const monthDeptMap: Record<string, Record<string, number>> = {};
+
+  for (const tx of txRaw) {
+    const dept = tx.budget.department;
+    deptMetaMap[dept.id] = { name: dept.name, colorHex: dept.colorHex };
+    const month = new Date(tx.date)
+      .toLocaleDateString("en-US", { month: "short" })
+      .toUpperCase();
+    monthDeptMap[month] = monthDeptMap[month] ?? {};
+    monthDeptMap[month][dept.id] =
+      (monthDeptMap[month][dept.id] ?? 0) + Math.abs(Number(tx.amount));
   }
+
+  const departments = Object.entries(deptMetaMap).map(([id, meta]) => ({ id, ...meta }));
+
   const now = new Date();
-  const chartData = Array.from({ length: 6 }, (_, i) => {
+  const stackedChartData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i);
-    const key = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
-    return { month: key, amount: monthlyMap[key] ?? 0 };
+    const month = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+    const entry: Record<string, string | number> = { month };
+    for (const dept of departments) {
+      entry[dept.id] = monthDeptMap[month]?.[dept.id] ?? 0;
+    }
+    return entry;
   });
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">Analytics</h2>
-        <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">Usage patterns and spending trends</p>
+        <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
+          Analytics
+        </h2>
+        <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
+          Usage patterns and spending trends
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -61,26 +88,35 @@ export default async function AnalyticsPage() {
           { label: "Active Logins", value: loginStats.reduce((s, l) => s + l._count.id, 0) },
         ].map(({ label, value }) => (
           <div key={label} className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">{label}</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">
+              {label}
+            </p>
             <p className="font-display text-3xl font-extrabold text-[var(--color-on-surface)]">{value}</p>
           </div>
         ))}
       </div>
 
       <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6">
-        <h3 className="font-display font-semibold text-[var(--color-on-surface)] mb-4">Monthly Spending</h3>
-        <SpendingChart data={chartData} />
+        <h3 className="font-display font-semibold text-[var(--color-on-surface)] mb-4">
+          Monthly Spending by Department
+        </h3>
+        <StackedSpendingChart data={stackedChartData} departments={departments} />
       </div>
 
       <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6">
-        <h3 className="font-display font-semibold text-[var(--color-on-surface)] mb-4">Login Frequency</h3>
+        <h3 className="font-display font-semibold text-[var(--color-on-surface)] mb-4">
+          Login Frequency
+        </h3>
         <div className="space-y-3">
           {loginStats.map((stat) => {
             const user = userMap[stat.userId];
             if (!user) return null;
             return (
-              <div key={stat.userId} className="flex items-center gap-4 p-3 rounded-xl hover:bg-[var(--color-surface-container-low)] transition-colors">
-                <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              <div
+                key={stat.userId}
+                className="flex items-center gap-4 p-3 rounded-xl hover:bg-[var(--color-surface-container-low)] transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-black text-xs font-bold flex-shrink-0">
                   {user.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div className="flex-1">

@@ -53,6 +53,21 @@ export async function updateUserRole(id: string, role: Role, departmentId: strin
   revalidatePath("/admin/users");
 }
 
+export async function deleteUser(id: string) {
+  const session = await auth();
+  if (!session || !hasMinRole(session.user.role, "admin")) {
+    throw new Error("Unauthorized");
+  }
+
+  // Prevent deleting yourself or other admins
+  if (id === session.user.id) throw new Error("Cannot delete your own account");
+  const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+  if (target?.role === "admin") throw new Error("Cannot delete admin accounts");
+
+  await prisma.user.delete({ where: { id } });
+  revalidatePath("/admin/users");
+}
+
 export async function resetPassword(id: string, newPassword: string) {
   const session = await auth();
   if (!session || !hasMinRole(session.user.role, "admin")) {

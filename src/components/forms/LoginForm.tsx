@@ -70,9 +70,9 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 px-6 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-60"
+        className="w-full py-3 px-6 rounded-xl text-black font-semibold text-sm transition-all disabled:opacity-60"
         style={{
-          background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)",
+          background: "linear-gradient(135deg, #cfa126 0%, #e8b82a 100%)",
         }}
       >
         {loading ? "Signing in…" : "Sign In"}

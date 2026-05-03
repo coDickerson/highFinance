@@ -8,6 +8,7 @@ export default async function NewRequestPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
+  const isAdmin = hasMinRole(session.user.role, "admin");
   const isExec = hasMinRole(session.user.role, "executive");
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
 
@@ -31,6 +32,7 @@ export default async function NewRequestPage() {
         <ReimbursementForm
           departments={departments}
           defaultDepartmentId={user?.departmentId ?? undefined}
+          isAdmin={isAdmin}
         />
       </div>
     </div>

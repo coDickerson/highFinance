@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createUser, resetPassword } from "./actions";
+import { createUser, resetPassword, deleteUser } from "./actions";
 
 type Dept = { id: string; name: string; colorHex: string };
 type UserRow = {
@@ -40,7 +40,20 @@ export function UsersClient({
   const [resetPending, setResetPending] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState("officer");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  async function handleDelete(userId: string, userName: string) {
+    if (!confirm(`Remove ${userName} from the platform? This cannot be undone.`)) return;
+    setDeletingId(userId);
+    try {
+      await deleteUser(userId);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to remove user");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -92,7 +105,7 @@ export function UsersClient({
         <button
           onClick={() => setShowForm((v) => !v)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
         >
           <span className="material-symbols-outlined text-[16px]">person_add</span>
           Add Officer
@@ -198,7 +211,7 @@ export function UsersClient({
                 type="submit"
                 disabled={pendingCreate}
                 className="px-5 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+                style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
               >
                 {pendingCreate ? "Creating…" : "Create Account"}
               </button>
@@ -229,7 +242,7 @@ export function UsersClient({
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                      style={{ backgroundColor: u.department?.colorHex ?? "#002046" }}
+                      style={{ backgroundColor: u.department?.colorHex ?? "#000000" }}
                     >
                       {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
@@ -271,7 +284,7 @@ export function UsersClient({
                       <button
                         onClick={() => handleResetPassword(u.id)}
                         disabled={resetPending}
-                        className="text-xs px-2 py-1 rounded-lg bg-[var(--color-primary)] text-white disabled:opacity-50"
+                        className="text-xs px-2 py-1 rounded-lg bg-[var(--color-primary)] text-black disabled:opacity-50"
                       >
                         {resetPending ? "…" : "Set"}
                       </button>
@@ -284,13 +297,25 @@ export function UsersClient({
                       {resetError && <span className="text-xs text-[var(--color-error)]">{resetError}</span>}
                     </div>
                   ) : (
-                    <button
-                      onClick={() => { setResetTargetId(u.id); setResetPassword_(""); setResetError(null); }}
-                      className="text-xs text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">lock_reset</span>
-                      Reset pw
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => { setResetTargetId(u.id); setResetPassword_(""); setResetError(null); }}
+                        className="text-xs text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">lock_reset</span>
+                        Reset pw
+                      </button>
+                      {u.role !== "admin" && (
+                        <button
+                          onClick={() => handleDelete(u.id, u.name)}
+                          disabled={deletingId === u.id}
+                          className="text-xs text-[var(--color-error)] hover:opacity-70 transition-opacity flex items-center gap-1 disabled:opacity-40"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                          {deletingId === u.id ? "Removing…" : "Remove"}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </td>
               </tr>

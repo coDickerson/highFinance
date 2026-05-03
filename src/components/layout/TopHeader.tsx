@@ -20,37 +20,6 @@ export function TopHeader({ title = "Fiscal Architect" }: { title?: string }) {
         </h1>
       </div>
 
-      {/* Search */}
-      <div className="hidden lg:flex items-center gap-2 bg-[var(--color-surface-container-low)] rounded-xl px-3 py-2 w-64">
-        <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-[18px]">
-          search
-        </span>
-        <input
-          type="search"
-          placeholder="Search records..."
-          className="bg-transparent text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-on-surface-variant)] outline-none w-full"
-        />
-      </div>
-
-      {/* Icons */}
-      <div className="flex items-center gap-1">
-        <button className="relative p-2 rounded-lg hover:bg-[var(--color-surface-container-low)] transition-colors">
-          <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-[20px]">
-            notifications
-          </span>
-        </button>
-        <button className="p-2 rounded-lg hover:bg-[var(--color-surface-container-low)] transition-colors">
-          <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-[20px]">
-            help_outline
-          </span>
-        </button>
-        <button className="p-2 rounded-lg hover:bg-[var(--color-surface-container-low)] transition-colors">
-          <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-[20px]">
-            settings
-          </span>
-        </button>
-      </div>
-
       {/* Avatar */}
       <div className="flex items-center gap-2.5 ml-1">
         <div className="text-right hidden sm:block">
@@ -61,7 +30,7 @@ export function TopHeader({ title = "Fiscal Architect" }: { title?: string }) {
             {session?.user?.role}
           </p>
         </div>
-        <div className="w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-sm font-bold">
+        <div className="w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-black text-sm font-bold">
           {initials}
         </div>
       </div>

@@ -37,10 +37,14 @@ export function IncomeClient({
   rows,
   currentSemester,
   currentYear,
+  paidMembers,
+  totalMembers,
 }: {
   rows: IncomeRow[];
   currentSemester: string;
   currentYear: number;
+  paidMembers: number;
+  totalMembers: number;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [filterSem, setFilterSem] = useState<string>("all");
@@ -102,7 +106,7 @@ export function IncomeClient({
         <button
           onClick={() => setShowForm((v) => !v)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Add Income
@@ -110,7 +114,7 @@ export function IncomeClient({
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-5">
           <p className="text-xs text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-1">
             {semesterLabel(currentSemester, currentYear)} Total
@@ -131,6 +135,17 @@ export function IncomeClient({
           </p>
           <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
             {filtered.length} entr{filtered.length === 1 ? "y" : "ies"}
+          </p>
+        </div>
+        <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-5">
+          <p className="text-xs text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-1">
+            Dues Roster
+          </p>
+          <p className="font-display text-2xl font-extrabold text-[var(--color-on-surface)]">
+            {paidMembers} <span className="text-base font-normal text-[var(--color-on-surface-variant)]">/ {totalMembers}</span>
+          </p>
+          <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
+            brothers paid · {totalMembers - paidMembers} outstanding
           </p>
         </div>
       </div>
@@ -245,7 +260,7 @@ export function IncomeClient({
                 type="submit"
                 disabled={pending}
                 className="px-5 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+                style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
               >
                 {pending ? "Saving…" : "Save Entry"}
               </button>
@@ -261,7 +276,7 @@ export function IncomeClient({
           onClick={() => setFilterSem("all")}
           className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
             filterSem === "all"
-              ? "bg-[var(--color-primary)] text-white"
+              ? "bg-[var(--color-primary)] text-black"
               : "bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)]"
           }`}
         >
@@ -273,7 +288,7 @@ export function IncomeClient({
             onClick={() => setFilterSem(s)}
             className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
               filterSem === s
-                ? "bg-[var(--color-primary)] text-white"
+                ? "bg-[var(--color-primary)] text-black"
                 : "bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)]"
             }`}
           >

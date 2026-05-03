@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 interface Props {
   departments: { id: string; name: string }[];
   defaultDepartmentId?: string;
+  isAdmin?: boolean;
 }
 
 const PAYMENT_METHODS = [
@@ -16,7 +17,7 @@ const PAYMENT_METHODS = [
   { value: "check", label: "Check" },
 ];
 
-export function ReimbursementForm({ departments, defaultDepartmentId }: Props) {
+export function ReimbursementForm({ departments, defaultDepartmentId, isAdmin = false }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +42,7 @@ export function ReimbursementForm({ departments, defaultDepartmentId }: Props) {
     setLoading(true);
     setError("");
 
-    if (!receiptFile) {
+    if (!isAdmin && !receiptFile) {
       setError("Please attach a receipt image.");
       setLoading(false);
       return;
@@ -55,7 +56,7 @@ export function ReimbursementForm({ departments, defaultDepartmentId }: Props) {
     const venmoZelleEl = form.elements.namedItem("venmoZelle") as HTMLInputElement | null;
     if (venmoZelleEl) data.append("venmoZelle", venmoZelleEl.value);
     data.append("description", (form.elements.namedItem("description") as HTMLTextAreaElement).value);
-    data.append("receipt", receiptFile);
+    if (receiptFile) data.append("receipt", receiptFile);
 
     const res = await fetch("/api/requests", { method: "POST", body: data });
 
@@ -156,7 +157,9 @@ export function ReimbursementForm({ departments, defaultDepartmentId }: Props) {
 
       {/* Receipt upload */}
       <div>
-        <label className={labelClass}>Receipt</label>
+        <label className={labelClass}>
+          Receipt{isAdmin ? " (optional)" : ""}
+        </label>
         <input
           ref={fileInputRef}
           type="file"
@@ -214,7 +217,7 @@ export function ReimbursementForm({ departments, defaultDepartmentId }: Props) {
           type="submit"
           disabled={loading}
           className="flex-1 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
         >
           {loading ? "Submitting…" : "Submit Request"}
         </button>

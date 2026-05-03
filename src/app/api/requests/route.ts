@@ -9,6 +9,7 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const isAdmin = session.user.role === "admin";
   const formData = await req.formData();
 
   const departmentId = formData.get("departmentId") as string | null;
@@ -27,15 +28,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Venmo/Zelle address is required for this payment method" }, { status: 400 });
   }
 
-  if (!receipt || receipt.size === 0) {
+  // Receipt is required for non-admin users only
+  if (!isAdmin && (!receipt || receipt.size === 0)) {
     return NextResponse.json({ error: "Receipt image is required" }, { status: 400 });
   }
-
-  const ext = receipt.name.split(".").pop() ?? "jpg";
-  const filename = `${randomUUID()}.${ext}`;
-  const uploadDir = join(process.cwd(), "public", "uploads");
-  const bytes = await receipt.arrayBuffer();
-  await writeFile(join(uploadDir, filename), Buffer.from(bytes));
 
   const request = await prisma.reimbursementRequest.create({
     data: {
@@ -46,17 +42,30 @@ export async function POST(req: Request) {
       paymentMethod,
       venmoZelle: venmoZelle || null,
       description,
+      // Admin submissions are auto-approved
+      ...(isAdmin
+        ? { status: "approved", reviewedById: session.user.id }
+        : { status: "pending" }),
     },
   });
 
-  await prisma.receipt.create({
-    data: {
-      requestId: request.id,
-      filename: receipt.name,
-      url: `/uploads/${filename}`,
-      mimeType: receipt.type || "image/jpeg",
-    },
-  });
+  // Save receipt if provided
+  if (receipt && receipt.size > 0) {
+    const ext = receipt.name.split(".").pop() ?? "jpg";
+    const filename = `${randomUUID()}.${ext}`;
+    const uploadDir = join(process.cwd(), "public", "uploads");
+    const bytes = await receipt.arrayBuffer();
+    await writeFile(join(uploadDir, filename), Buffer.from(bytes));
+
+    await prisma.receipt.create({
+      data: {
+        requestId: request.id,
+        filename: receipt.name,
+        url: `/uploads/${filename}`,
+        mimeType: receipt.type || "image/jpeg",
+      },
+    });
+  }
 
   return NextResponse.json(request, { status: 201 });
 }
