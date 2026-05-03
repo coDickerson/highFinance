@@ -2,10 +2,9 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
-import { BudgetCard } from "@/components/ui/BudgetCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { CreateBudgetForm } from "./CreateBudgetForm";
+import { BudgetsAdminClient } from "./BudgetsAdminClient";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -27,13 +26,13 @@ export default async function BudgetsPage() {
     include: { department: true },
   });
 
-  // ── Exec / Admin: card-grid list view ───────────────────────────────────────
+  // ── Exec / Admin: card-grid with inline drawer ──────────────────────────────
   if (isExecOrAbove) {
     const departments = await prisma.department.findMany({
       include: {
         budgets: {
           where: { status: "active" },
-          include: { transactions: true },
+          include: { transactions: { orderBy: { date: "desc" } } },
           orderBy: { year: "desc" },
         },
       },
@@ -54,6 +53,14 @@ export default async function BudgetsPage() {
           spent,
           transactionCount: b.transactions.length,
           semester: semesterLabel(b.semester, b.year),
+          transactions: b.transactions.map((t) => ({
+            id: t.id,
+            vendor: t.vendor,
+            category: t.category,
+            amount: Number(t.amount),
+            date: t.date.toISOString(),
+            status: t.status as string,
+          })),
         };
       })
     );
@@ -63,38 +70,7 @@ export default async function BudgetsPage() {
       : [];
 
     return (
-      <div className="space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
-              All Officer Budgets
-            </h2>
-            <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-              Active budgets across all positions
-            </p>
-          </div>
-          {isAdmin && <CreateBudgetForm departments={allDepts} />}
-        </div>
-        {budgets.length === 0 ? (
-          <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-8 text-center">
-            <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-4xl mb-3 block">
-              account_balance_wallet
-            </span>
-            <p className="text-[var(--color-on-surface)] font-medium mb-1">No active budgets yet</p>
-            <p className="text-[var(--color-on-surface-variant)] text-sm">
-              Create budgets for each officer position to get started for FA26.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {budgets.map((b) => (
-              <Link key={b.id} href={`/budgets/${b.id}`}>
-                <BudgetCard {...b} />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      <BudgetsAdminClient budgets={budgets} departments={allDepts} isAdmin={isAdmin} />
     );
   }
 

@@ -90,7 +90,7 @@ export function LoginForm() {
         <p className="font-semibold text-[var(--color-on-surface)] mb-2">Demo Credentials</p>
         <p>Admin: <span className="font-mono">admin@highfinance.test</span> / <span className="font-mono">Admin1234</span></p>
         <p>Executive: <span className="font-mono">exec@highfinance.test</span> / <span className="font-mono">Exec1234</span></p>
-        <p>Officer: <span className="font-mono">marketing@highfinance.test</span> / <span className="font-mono">Officer1234</span></p>
+        <p>Officer: <span className="font-mono">social@highfinance.test</span> / <span className="font-mono">Officer1234</span></p>
       </div>
     </form>
   );

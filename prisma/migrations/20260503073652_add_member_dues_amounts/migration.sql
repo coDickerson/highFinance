@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Member" ADD COLUMN     "duesOwed" DECIMAL(12,2) NOT NULL DEFAULT 0,
+ADD COLUMN     "duesPaid" DECIMAL(12,2) NOT NULL DEFAULT 0;

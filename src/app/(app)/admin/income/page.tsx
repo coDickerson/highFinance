@@ -9,19 +9,22 @@ export default async function IncomePage() {
   const session = await auth();
   if (!session || !hasMinRole(session.user.role, "admin")) redirect("/dashboard");
 
-  const [rows, paidMembers, totalMembers] = await Promise.all([
+  const [rows, paidMembers, totalMembers, duesAggregate] = await Promise.all([
     prisma.income.findMany({ orderBy: { date: "desc" } }),
     prisma.member.count({ where: { duesStatus: "paid" } }),
     prisma.member.count(),
+    prisma.member.aggregate({ _sum: { duesPaid: true } }),
   ]);
+
+  const rosterDuesPaid = Number(duesAggregate._sum.duesPaid ?? 0);
 
   const serialized = rows.map((r) => ({
     id: r.id,
-    type: r.type,
+    type: r.type as string,
     amount: Number(r.amount),
     description: r.description,
-    date: r.date,
-    semester: r.semester,
+    date: r.date.toISOString(),
+    semester: r.semester as string,
     year: r.year,
   }));
 
@@ -37,6 +40,7 @@ export default async function IncomePage() {
       currentYear={currentYear}
       paidMembers={paidMembers}
       totalMembers={totalMembers}
+      rosterDuesPaid={rosterDuesPaid}
     />
   );
 }

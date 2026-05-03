@@ -20,7 +20,7 @@ type IncomeRow = {
   type: string;
   amount: number;
   description: string;
-  date: Date;
+  date: string;
   semester: string;
   year: number;
 };
@@ -39,12 +39,14 @@ export function IncomeClient({
   currentYear,
   paidMembers,
   totalMembers,
+  rosterDuesPaid,
 }: {
   rows: IncomeRow[];
   currentSemester: string;
   currentYear: number;
   paidMembers: number;
   totalMembers: number;
+  rosterDuesPaid: number;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [filterSem, setFilterSem] = useState<string>("all");
@@ -146,6 +148,9 @@ export function IncomeClient({
           </p>
           <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
             brothers paid · {totalMembers - paidMembers} outstanding
+          </p>
+          <p className="text-xs text-[var(--color-secondary)] font-semibold mt-1">
+            {fmt(rosterDuesPaid)} collected from roster
           </p>
         </div>
       </div>

@@ -7,3 +7,8 @@ export function getCurrentSemester(): string {
   if (month >= 1 && month <= 5) return `Spring ${year}`;
   return `Summer ${year}`;
 }
+
+export function getCalendarYear(): { year: number; label: string } {
+  const year = new Date().getFullYear();
+  return { year, label: String(year) };
+}

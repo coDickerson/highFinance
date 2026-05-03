@@ -40,3 +40,13 @@ export async function updateBudget(id: string, formData: FormData) {
   revalidatePath("/budgets");
   revalidatePath(`/budgets/${id}`);
 }
+
+export async function deleteBudget(id: string) {
+  const session = await auth();
+  if (!session || !hasMinRole(session.user.role, "admin")) throw new Error("Unauthorized");
+
+  await prisma.transaction.deleteMany({ where: { budgetId: id } });
+  await prisma.budget.delete({ where: { id } });
+
+  revalidatePath("/budgets");
+}

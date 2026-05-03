@@ -51,7 +51,26 @@ export default async function NewTransactionPage() {
     include: { department: { select: { name: true, colorHex: true } } },
   });
 
-  if (!budget) redirect("/transactions");
+  if (!budget) {
+    return (
+      <div className="max-w-xl">
+        <div className="mb-6">
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
+            Log Transaction
+          </h2>
+        </div>
+        <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-8 text-center">
+          <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-4xl mb-3 block">
+            account_balance_wallet
+          </span>
+          <p className="text-[var(--color-on-surface)] font-medium mb-1">No active budget assigned</p>
+          <p className="text-[var(--color-on-surface-variant)] text-sm">
+            Contact your treasurer to set up an active budget for your position before logging transactions.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const budgetProp = {
     id: budget.id,
