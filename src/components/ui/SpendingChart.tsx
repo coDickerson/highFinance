@@ -36,7 +36,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
             Number(v).toLocaleString("en-US", { style: "currency", currency: "USD" })
           }
         />
-        <Bar dataKey="amount" fill="#002046" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="amount" fill="#cfa126" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

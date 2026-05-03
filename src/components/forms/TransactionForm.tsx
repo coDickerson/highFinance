@@ -162,7 +162,7 @@ export function TransactionForm({ budget, budgets }: Props) {
           type="submit"
           disabled={loading}
           className="flex-1 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
         >
           {loading ? "Saving…" : "Save Transaction"}
         </button>

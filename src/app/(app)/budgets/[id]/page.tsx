@@ -1,8 +1,10 @@
 import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
+import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { EditBudgetForm } from "../EditBudgetForm";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -16,6 +18,7 @@ export default async function BudgetDetailPage({
 }) {
   const session = await auth();
   if (!session) redirect("/login");
+  const isAdmin = hasMinRole(session.user.role, "admin");
   const { id } = await params;
 
   const budget = await prisma.budget.findUnique({
@@ -39,10 +42,17 @@ export default async function BudgetDetailPage({
         <Link href="/budgets" className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-on-surface)] transition-colors">
           <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </Link>
-        <div>
+        <div className="flex-1">
           <h2 className="font-display text-2xl font-extrabold text-[var(--color-on-surface)]">{budget.name}</h2>
           <p className="text-[var(--color-on-surface-variant)] text-sm">{budget.department.name} · FY{budget.year}</p>
         </div>
+        {isAdmin && (
+          <EditBudgetForm
+            id={budget.id}
+            currentName={budget.name}
+            currentTotal={Number(budget.totalAmount)}
+          />
+        )}
       </div>
 
       <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6">

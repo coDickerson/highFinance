@@ -12,7 +12,7 @@ export default function LoginPage() {
         <div
           className="hidden lg:flex flex-col justify-between w-1/2 p-12 text-white"
           style={{
-            background: "linear-gradient(160deg, #002046 0%, #1b365d 60%, #002046 100%)",
+            background: "linear-gradient(160deg, #000000 0%, #111111 60%, #000000 100%)",
           }}
         >
           <div className="flex items-center gap-3">
@@ -53,7 +53,7 @@ export default function LoginPage() {
           <div className="w-full max-w-md">
             <div className="lg:hidden flex items-center gap-3 mb-8">
               <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center">
-                <span className="material-symbols-outlined text-white text-base">account_balance</span>
+                <span className="material-symbols-outlined text-[var(--color-primary)] text-base">account_balance</span>
               </div>
               <p className="font-display font-bold text-[var(--color-on-surface)]">Treasury Portal</p>
             </div>

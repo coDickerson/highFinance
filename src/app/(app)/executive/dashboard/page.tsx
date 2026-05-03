@@ -4,6 +4,7 @@ import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { BudgetCard } from "@/components/ui/BudgetCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getCurrentSemester } from "@/lib/semester";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -13,6 +14,8 @@ function fmt(n: number) {
 export default async function ExecutiveDashboardPage() {
   const session = await auth();
   if (!session || !hasMinRole(session.user.role, "executive")) redirect("/dashboard");
+
+  const semester = getCurrentSemester();
 
   const departments = await prisma.department.findMany({
     include: {
@@ -61,13 +64,13 @@ export default async function ExecutiveDashboardPage() {
             Executive Overview
           </h2>
           <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-            Real-time treasury metrics for Fiscal Year 2024
+            Real-time treasury metrics · {semester}
           </p>
         </div>
         <Link
           href="/transactions/new"
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors"
-          style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Add Receipt
@@ -77,7 +80,7 @@ export default async function ExecutiveDashboardPage() {
       {/* Hero — consolidated assets */}
       <div
         className="rounded-2xl p-6 text-white"
-        style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+        style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
       >
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>

@@ -54,7 +54,7 @@ export default async function TransactionsPage() {
           <Link
             href="/transactions/new"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-            style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+            style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
           >
             <span className="material-symbols-outlined text-[16px]">add</span>
             New Transaction

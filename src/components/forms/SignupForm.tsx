@@ -133,7 +133,7 @@ export function SignupForm({ departments }: Props) {
         type="submit"
         disabled={loading}
         className="w-full py-3 px-6 rounded-xl text-white font-semibold text-sm transition-all disabled:opacity-60"
-        style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+        style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
       >
         {loading ? "Submitting…" : "Request Access"}
       </button>

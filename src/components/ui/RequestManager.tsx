@@ -25,9 +25,10 @@ interface Request {
 
 interface Props {
   requests: Request[];
+  isAdmin?: boolean;
 }
 
-export function RequestManager({ requests }: Props) {
+export function RequestManager({ requests, isAdmin = false }: Props) {
   const [tab, setTab] = useState<"pending" | "approved" | "denied">("pending");
   const [selected, setSelected] = useState<string | null>(
     requests.find((r) => r.status === "pending")?.id ?? null
@@ -208,8 +209,8 @@ export function RequestManager({ requests }: Props) {
               </div>
             )}
 
-            {/* Internal note + actions — only for pending */}
-            {selectedReq.status === "pending" && (
+            {/* Internal note + actions — only for admin on pending requests */}
+            {isAdmin && selectedReq.status === "pending" && (
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1.5">

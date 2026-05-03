@@ -19,7 +19,7 @@ const DUES_COLORS: Record<string, string> = {
   exempt: "bg-gray-100 text-gray-600",
 };
 
-export function MembersClient({ members }: { members: MemberRow[] }) {
+export function MembersClient({ members, isAdmin }: { members: MemberRow[]; isAdmin: boolean }) {
   const [showForm, setShowForm] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,18 +66,20 @@ export function MembersClient({ members }: { members: MemberRow[] }) {
             {members.length} brothers · {paidCount} paid · {overdueCount} overdue
           </p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
-        >
-          <span className="material-symbols-outlined text-[16px]">person_add</span>
-          Add Brother
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
+            style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+          >
+            <span className="material-symbols-outlined text-[16px]">person_add</span>
+            Add Brother
+          </button>
+        )}
       </div>
 
       {/* Add member form */}
-      {showForm && (
+      {isAdmin && showForm && (
         <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6">
           <h3 className="font-display font-semibold text-[var(--color-on-surface)] mb-4">
             Add New Brother
@@ -163,7 +165,7 @@ export function MembersClient({ members }: { members: MemberRow[] }) {
                 type="submit"
                 disabled={pending}
                 className="px-5 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, #002046 0%, #1b365d 100%)" }}
+                style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
               >
                 {pending ? "Adding…" : "Add Brother"}
               </button>
@@ -181,7 +183,7 @@ export function MembersClient({ members }: { members: MemberRow[] }) {
             onClick={() => setFilterDues(f)}
             className={`px-3 py-1 rounded-full text-xs font-semibold capitalize transition-colors ${
               filterDues === f
-                ? "bg-[var(--color-primary)] text-white"
+                ? "bg-[var(--color-primary)] text-black"
                 : "bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)]"
             }`}
           >
@@ -237,7 +239,7 @@ export function MembersClient({ members }: { members: MemberRow[] }) {
                     {m.lastPayment ? new Date(m.lastPayment).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}
                   </td>
                   <td className="py-3">
-                    {m.duesStatus !== "exempt" && (
+                    {isAdmin && m.duesStatus !== "exempt" && (
                       <button
                         onClick={() => handleDuesToggle(m.id, m.duesStatus)}
                         className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${

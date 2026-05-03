@@ -6,6 +6,8 @@ const { auth } = NextAuth(authConfig);
 
 const ROLE_RANK: Record<string, number> = { officer: 1, executive: 2, admin: 3 };
 
+const EXEC_ALLOWED_ADMIN_ROUTES = ["/admin/members"];
+
 const ROUTE_REQUIREMENTS: Array<{ prefix: string; minRole: string }> = [
   { prefix: "/admin", minRole: "admin" },
   { prefix: "/executive", minRole: "executive" },
@@ -33,6 +35,14 @@ export default auth((req) => {
   }
 
   const userRank = ROLE_RANK[session.user?.role ?? ""] ?? 0;
+
+  // Execs can access specific admin routes (read-only, enforced at page level)
+  if (EXEC_ALLOWED_ADMIN_ROUTES.some((r) => pathname.startsWith(r))) {
+    if (userRank < ROLE_RANK["executive"]) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    return NextResponse.next();
+  }
 
   for (const { prefix, minRole } of ROUTE_REQUIREMENTS) {
     if (pathname.startsWith(prefix)) {

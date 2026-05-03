@@ -6,7 +6,9 @@ import { MembersClient } from "./MembersClient";
 
 export default async function MembersPage() {
   const session = await auth();
-  if (!session || !hasMinRole(session.user.role, "admin")) redirect("/dashboard");
+  if (!session || !hasMinRole(session.user.role, "executive")) redirect("/dashboard");
+
+  const isAdmin = hasMinRole(session.user.role, "admin");
 
   const members = await prisma.member.findMany({ orderBy: { name: "asc" } });
 
@@ -20,5 +22,5 @@ export default async function MembersPage() {
     lastPayment: m.lastPayment,
   }));
 
-  return <MembersClient members={serialized} />;
+  return <MembersClient members={serialized} isAdmin={isAdmin} />;
 }

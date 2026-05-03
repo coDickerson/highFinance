@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { BudgetCard } from "@/components/ui/BudgetCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { CreateBudgetForm } from "./CreateBudgetForm";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -20,6 +21,7 @@ export default async function BudgetsPage() {
   if (!session) redirect("/login");
 
   const isExecOrAbove = hasMinRole(session.user.role, "executive");
+  const isAdmin = hasMinRole(session.user.role, "admin");
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: { department: true },
@@ -56,15 +58,22 @@ export default async function BudgetsPage() {
       })
     );
 
+    const allDepts = isAdmin
+      ? await prisma.department.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
+      : [];
+
     return (
       <div className="space-y-5">
-        <div>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
-            All Officer Budgets
-          </h2>
-          <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-            Active budgets across all positions
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
+              All Officer Budgets
+            </h2>
+            <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
+              Active budgets across all positions
+            </p>
+          </div>
+          {isAdmin && <CreateBudgetForm departments={allDepts} />}
         </div>
         {budgets.length === 0 ? (
           <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-8 text-center">

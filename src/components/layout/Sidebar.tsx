@@ -19,7 +19,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Transactions", href: "/transactions", icon: "receipt_long", minRole: 1 },
   { label: "Reimbursement Request", href: "/requests", icon: "request_page", minRole: 1 },
   { label: "Analytics", href: "/admin/analytics", icon: "analytics", minRole: 3 },
-  { label: "Memberships", href: "/admin/signups", icon: "person_add", minRole: 3 },
+  { label: "Roster", href: "/admin/members", icon: "groups", minRole: 2 },
+  { label: "Signups", href: "/admin/signups", icon: "person_add", minRole: 3 },
   { label: "Income", href: "/admin/income", icon: "payments", minRole: 3 },
   { label: "Users", href: "/admin/users", icon: "manage_accounts", minRole: 3 },
 ];
@@ -31,12 +32,12 @@ export function Sidebar({ role }: { role: string }) {
   const visibleItems = NAV_ITEMS.filter((item) => rank >= item.minRole);
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-[var(--color-primary)] flex flex-col z-40">
+    <aside className="fixed left-0 top-0 h-full w-64 bg-[var(--color-surface-container-lowest)] flex flex-col z-40">
       {/* Branding */}
       <div className="px-5 py-6 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-base">account_balance</span>
+          <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center">
+            <span className="material-symbols-outlined text-[var(--color-primary)] text-base">account_balance</span>
           </div>
           <div>
             <p className="text-white font-display font-bold text-sm leading-tight">Treasury Portal</p>
@@ -57,7 +58,7 @@ export function Sidebar({ role }: { role: string }) {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${
                 active
-                  ? "bg-white/15 text-white translate-x-0.5 border-r-2 border-white"
+                  ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] translate-x-0.5 border-r-2 border-[var(--color-primary)]"
                   : "text-white/60 hover:bg-white/8 hover:text-white/90"
               }`}
             >
@@ -72,7 +73,7 @@ export function Sidebar({ role }: { role: string }) {
       <div className="px-3 pb-4">
         <Link
           href="/transactions/new"
-          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-white/15 hover:bg-white/20 text-white text-sm font-semibold transition-all"
+          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-[var(--color-primary)] hover:opacity-90 text-black text-sm font-semibold transition-all"
         >
           <span className="material-symbols-outlined text-[16px]">add</span>
           Log Transaction
