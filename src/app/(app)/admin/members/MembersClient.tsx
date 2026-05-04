@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createMember, updateDuesAmounts } from "./actions";
-import { SignupManager } from "@/components/ui/SignupManager";
+import { createMember, updateDuesAmounts, bulkUpdateMembers } from "./actions";
 
 type MemberRow = {
   id: string;
@@ -17,18 +16,13 @@ type MemberRow = {
   dueDate: string | null;
 };
 
-type SignupRow = {
-  id: string;
-  name: string;
-  email: string;
-  departmentId: string | null;
-  role: string;
-  status: string;
-  createdAt: string;
-  department: { name: string } | null;
-};
-
-type Department = { id: string; name: string };
+const DUES_PRESETS = [
+  { label: "Senior", amount: 500 },
+  { label: "FA", amount: 700 },
+  { label: "Brother", amount: 900 },
+  { label: "Abroad", amount: 50 },
+  { label: "New Member", amount: 1200 },
+];
 
 const DUES_COLORS: Record<string, string> = {
   paid:        "bg-green-100 text-green-800",
@@ -49,23 +43,23 @@ function fmt(n: number) {
 }
 
 type EditState = { owed: string; paid: string; dueDate: string; exempt: boolean };
+type BulkEditRow = { name: string; tier: string; duesOwed: string; duesStatus: string };
 
 export function MembersClient({
   members,
   isAdmin,
-  signupRequests,
-  departments,
 }: {
   members: MemberRow[];
   isAdmin: boolean;
-  signupRequests: SignupRow[];
-  departments: Department[];
 }) {
-  const [showForm, setShowForm]       = useState(false);
-  const [showSignups, setShowSignups] = useState(false);
-  const [pending, setPending]         = useState(false);
-  const [error, setError]             = useState<string | null>(null);
-  const [filterDues, setFilterDues]   = useState<string>("all");
+  const [showForm, setShowForm]           = useState(false);
+  const [showBulkEdit, setShowBulkEdit]   = useState(false);
+  const [bulkEdits, setBulkEdits]         = useState<Record<string, BulkEditRow>>({});
+  const [bulkPending, setBulkPending]     = useState(false);
+  const [pending, setPending]             = useState(false);
+  const [error, setError]                 = useState<string | null>(null);
+  const [filterDues, setFilterDues]       = useState<string>("all");
+  const [newDuesOwed, setNewDuesOwed]     = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const [editing, setEditing] = useState<Record<string, EditState>>({});
@@ -76,7 +70,6 @@ export function MembersClient({
 
   const paidCount    = members.filter((m) => m.duesStatus === "paid").length;
   const overdueCount = members.filter((m) => m.duesStatus === "overdue").length;
-  const pendingSignupCount = signupRequests.filter((r) => r.status === "pending").length;
 
   const totalOwed        = members.reduce((s, m) => s + m.duesOwed, 0);
   const totalPaid        = members.reduce((s, m) => s + m.duesPaid, 0);
@@ -89,6 +82,7 @@ export function MembersClient({
     try {
       await createMember(new FormData(e.currentTarget));
       formRef.current?.reset();
+      setNewDuesOwed("");
       setShowForm(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add member");
@@ -126,6 +120,36 @@ export function MembersClient({
     cancelEdit(id);
   }
 
+  function openBulkEdit() {
+    const initial: Record<string, BulkEditRow> = {};
+    for (const m of members) {
+      initial[m.id] = { name: m.name, tier: m.tier, duesOwed: String(m.duesOwed), duesStatus: m.duesStatus };
+    }
+    setBulkEdits(initial);
+    setShowBulkEdit(true);
+  }
+
+  async function saveBulkEdit() {
+    setBulkPending(true);
+    try {
+      const updates = Object.entries(bulkEdits).map(([id, row]) => ({
+        id,
+        name: row.name,
+        tier: row.tier,
+        duesOwed: parseFloat(row.duesOwed) || 0,
+        duesStatus: row.duesStatus,
+      }));
+      await bulkUpdateMembers(updates);
+      setShowBulkEdit(false);
+    } finally {
+      setBulkPending(false);
+    }
+  }
+
+  function setBulkField(id: string, field: keyof BulkEditRow, value: string) {
+    setBulkEdits((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  }
+
   const inputClass =
     "w-full px-3 py-2.5 rounded-xl bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]";
 
@@ -134,24 +158,112 @@ export function MembersClient({
 
   return (
     <div className="space-y-5">
-      {/* Signup Manager Modal */}
-      {showSignups && (
-        <div className="fixed inset-0 z-50 flex items-stretch">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowSignups(false)} />
-          <div className="relative ml-auto w-full max-w-4xl bg-[var(--color-surface-container-lowest)] shadow-2xl flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-outline-variant)]">
+      {/* Bulk Edit Drawer */}
+      {showBulkEdit && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowBulkEdit(false)} />
+          <div className="relative ml-auto w-full max-w-5xl bg-[var(--color-surface-container-lowest)] shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-outline-variant)] flex-shrink-0">
               <h2 className="font-display text-lg font-bold text-[var(--color-on-surface)]">
-                Signup Approval Manager
+                Bulk Edit Members
               </h2>
-              <button
-                onClick={() => setShowSignups(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] transition-colors"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={saveBulkEdit}
+                  disabled={bulkPending}
+                  className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+                >
+                  {bulkPending ? "Saving…" : "Save Changes"}
+                </button>
+                <button
+                  onClick={() => setShowBulkEdit(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              <SignupManager requests={signupRequests} departments={departments} />
+            <div className="flex-1 overflow-y-auto p-6">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--color-outline-variant)]">
+                    {["Name", "Email", "Class", "Dues Owed", "Status"].map((h) => (
+                      <th key={h} className="text-left text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] pb-3 pr-4">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map((m) => {
+                    const row = bulkEdits[m.id];
+                    if (!row) return null;
+                    return (
+                      <tr key={m.id} className="border-t border-[var(--color-outline-variant)]/20">
+                        <td className="py-2 pr-3">
+                          <input
+                            type="text"
+                            value={row.name}
+                            onChange={(e) => setBulkField(m.id, "name", e.target.value)}
+                            className={miniInput + " w-40"}
+                          />
+                        </td>
+                        <td className="py-2 pr-3 text-xs text-[var(--color-on-surface-variant)]">{m.email}</td>
+                        <td className="py-2 pr-3">
+                          <input
+                            type="text"
+                            value={row.tier}
+                            onChange={(e) => setBulkField(m.id, "tier", e.target.value)}
+                            placeholder="FA26…"
+                            className={miniInput + " w-20"}
+                          />
+                        </td>
+                        <td className="py-2 pr-3">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex flex-wrap gap-1">
+                              {DUES_PRESETS.map((p) => (
+                                <button
+                                  key={p.label}
+                                  type="button"
+                                  onClick={() => setBulkField(m.id, "duesOwed", String(p.amount))}
+                                  className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition-colors ${
+                                    row.duesOwed === String(p.amount)
+                                      ? "bg-[var(--color-primary)] text-black"
+                                      : "bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)]"
+                                  }`}
+                                >
+                                  {p.label}
+                                </button>
+                              ))}
+                            </div>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={row.duesOwed}
+                              onChange={(e) => setBulkField(m.id, "duesOwed", e.target.value)}
+                              className={miniInput + " w-24"}
+                            />
+                          </div>
+                        </td>
+                        <td className="py-2">
+                          <select
+                            value={row.duesStatus}
+                            onChange={(e) => setBulkField(m.id, "duesStatus", e.target.value)}
+                            className={miniInput}
+                          >
+                            <option value="overdue">Overdue</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="paid">Paid</option>
+                            <option value="exempt">Exempt</option>
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -169,28 +281,23 @@ export function MembersClient({
         </div>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <button
-              onClick={() => setShowSignups(true)}
-              className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[var(--color-surface-container)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">how_to_reg</span>
-              Review Signups
-              {pendingSignupCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--color-error)] text-white text-[10px] font-bold flex items-center justify-center">
-                  {pendingSignupCount}
-                </span>
-              )}
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={() => setShowForm((v) => !v)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-              style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
-            >
-              <span className="material-symbols-outlined text-[16px]">person_add</span>
-              Add Brother
-            </button>
+            <>
+              <button
+                onClick={openBulkEdit}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-[var(--color-on-surface)] bg-[var(--color-surface-container-high)] hover:bg-[var(--color-surface-container-highest)] transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">edit_note</span>
+                Bulk Edit
+              </button>
+              <button
+                onClick={() => setShowForm((v) => !v)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
+                style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+              >
+                <span className="material-symbols-outlined text-[16px]">person_add</span>
+                Add Brother
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -224,6 +331,35 @@ export function MembersClient({
                 <option value="paid">Paid</option>
                 <option value="exempt">Exempt</option>
               </select>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-[var(--color-on-surface-variant)] uppercase tracking-wider mb-1.5">Dues Owed ($)</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {DUES_PRESETS.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => setNewDuesOwed(String(p.amount))}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                      newDuesOwed === String(p.amount)
+                        ? "bg-[var(--color-primary)] text-black"
+                        : "bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-highest)]"
+                    }`}
+                  >
+                    {p.label} · ${p.amount}
+                  </button>
+                ))}
+              </div>
+              <input
+                name="duesOwed"
+                type="number"
+                step="0.01"
+                min="0"
+                value={newDuesOwed}
+                onChange={(e) => setNewDuesOwed(e.target.value)}
+                placeholder="0.00"
+                className={inputClass}
+              />
             </div>
             {error && <p className="col-span-2 text-sm text-[var(--color-error)]">{error}</p>}
             <div className="col-span-2 flex gap-3 justify-end pt-1">
@@ -344,12 +480,30 @@ export function MembersClient({
                     {/* Owed */}
                     <td className="py-3 pr-4 tabular-nums text-xs">
                       {isEditing ? (
-                        <input
-                          type="number" step="0.01" min="0"
-                          value={ed.owed}
-                          onChange={(e) => setEditing((prev) => ({ ...prev, [m.id]: { ...prev[m.id], owed: e.target.value } }))}
-                          className={miniInput + " w-20"}
-                        />
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-wrap gap-1">
+                            {DUES_PRESETS.map((p) => (
+                              <button
+                                key={p.label}
+                                type="button"
+                                onClick={() => setEditing((prev) => ({ ...prev, [m.id]: { ...prev[m.id], owed: String(p.amount) } }))}
+                                className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition-colors ${
+                                  ed.owed === String(p.amount)
+                                    ? "bg-[var(--color-primary)] text-black"
+                                    : "bg-[var(--color-surface-container-high)] text-[var(--color-on-surface-variant)]"
+                                }`}
+                              >
+                                {p.label}
+                              </button>
+                            ))}
+                          </div>
+                          <input
+                            type="number" step="0.01" min="0"
+                            value={ed.owed}
+                            onChange={(e) => setEditing((prev) => ({ ...prev, [m.id]: { ...prev[m.id], owed: e.target.value } }))}
+                            className={miniInput + " w-20"}
+                          />
+                        </div>
                       ) : fmt(m.duesOwed)}
                     </td>
 

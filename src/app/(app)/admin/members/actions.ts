@@ -17,6 +17,7 @@ export async function createMember(formData: FormData) {
   const phone = ((formData.get("phone") as string) || "").trim() || null;
   const tier = ((formData.get("tier") as string) || "").trim();
   const duesStatus = (formData.get("duesStatus") as DuesStatus) ?? DuesStatus.overdue;
+  const duesOwed = parseFloat((formData.get("duesOwed") as string) || "0") || 0;
 
   if (!name || !email) throw new Error("Name and email are required");
 
@@ -24,7 +25,7 @@ export async function createMember(formData: FormData) {
   if (existing) throw new Error("A member with that email already exists");
 
   await prisma.member.create({
-    data: { name, email, phone, tier, duesStatus },
+    data: { name, email, phone, tier, duesStatus, duesOwed },
   });
 
   revalidatePath("/admin/members");
@@ -42,6 +43,24 @@ function computeStatus(
     return DuesStatus.in_progress;
   }
   return DuesStatus.overdue;
+}
+
+export async function bulkUpdateMembers(
+  updates: { id: string; name: string; tier: string; duesOwed: number; duesStatus: string }[]
+) {
+  const session = await auth();
+  if (!session || !hasMinRole(session.user.role, "admin")) throw new Error("Unauthorized");
+
+  await Promise.all(
+    updates.map(({ id, name, tier, duesOwed, duesStatus }) =>
+      prisma.member.update({
+        where: { id },
+        data: { name, tier, duesOwed, duesStatus: duesStatus as DuesStatus },
+      })
+    )
+  );
+
+  revalidatePath("/admin/members");
 }
 
 export async function updateDuesAmounts(

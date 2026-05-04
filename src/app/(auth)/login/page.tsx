@@ -27,25 +27,14 @@ export default function LoginPage() {
 
           <div>
             <h2 className="font-display text-4xl font-extrabold leading-tight tracking-tight mb-4">
-              Clarity through<br />meticulous order.
+              Custom Treasury<br />Management App
             </h2>
             <p className="text-white/60 text-base leading-relaxed max-w-sm">
-              A premium treasury environment built for precision. Every figure, every allocation, every approval — curated with intent.
+              Courtesy of Cole Dickerson
             </p>
           </div>
 
-          <div className="flex gap-6">
-            {[
-              { value: "$4.2M", label: "Assets Managed" },
-              { value: "98%", label: "Compliance Rate" },
-              { value: "4.2h", label: "Avg. Response" },
-            ].map(({ value, label }) => (
-              <div key={label}>
-                <p className="font-display text-2xl font-bold">{value}</p>
-                <p className="text-white/50 text-xs">{label}</p>
-              </div>
-            ))}
-          </div>
+          <div />
         </div>
 
         {/* Right panel */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { createIncome, deleteIncome } from "./actions";
+import { createIncome, updateIncome, deleteIncome } from "./actions";
 
 const TYPE_LABELS: Record<string, string> = {
   dues: "Dues Collection",
@@ -52,6 +52,9 @@ export function IncomeClient({
   const [filterSem, setFilterSem] = useState<string>("all");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPending, setEditPending] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Collect unique semester options from data + current
@@ -71,6 +74,8 @@ export function IncomeClient({
     (r) => r.semester === currentSemester && r.year === currentYear
   );
   const currentSemTotal = currentSemRows.reduce((s, r) => s + r.amount, 0);
+  const yearlyRows = rows.filter((r) => r.year === currentYear);
+  const yearlyTotal = yearlyRows.reduce((s, r) => s + r.amount, 0);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -85,6 +90,21 @@ export function IncomeClient({
       setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setPending(false);
+    }
+  }
+
+  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editingId) return;
+    setEditPending(true);
+    setEditError(null);
+    try {
+      await updateIncome(editingId, new FormData(e.currentTarget));
+      setEditingId(null);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setEditPending(false);
     }
   }
 
@@ -130,13 +150,13 @@ export function IncomeClient({
         </div>
         <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-5">
           <p className="text-xs text-[var(--color-on-surface-variant)] uppercase tracking-widest mb-1">
-            {filterSem === "all" ? "All Time" : filterSem} Total
+            {currentYear} Yearly Total
           </p>
           <p className="font-display text-2xl font-extrabold text-[var(--color-on-surface)]">
-            {fmt(total)}
+            {fmt(yearlyTotal)}
           </p>
           <p className="text-xs text-[var(--color-on-surface-variant)] mt-1">
-            {filtered.length} entr{filtered.length === 1 ? "y" : "ies"}
+            {yearlyRows.length} entr{yearlyRows.length === 1 ? "y" : "ies"}
           </p>
         </div>
         <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-5">
@@ -323,7 +343,31 @@ export function IncomeClient({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => (
+              {filtered.map((row) => {
+                const isEditing = editingId === row.id;
+                return isEditing ? (
+                  <tr key={row.id}>
+                    <td colSpan={6} className="py-3">
+                      <form onSubmit={handleEdit} className="grid grid-cols-6 gap-2 bg-[var(--color-surface-container-low)] rounded-xl p-3">
+                        <input name="date" type="date" required defaultValue={row.date.split("T")[0]} className="col-span-1 px-2 py-1.5 rounded-lg bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-xs text-[var(--color-on-surface)] focus:outline-none" />
+                        <select name="type" required defaultValue={row.type} className="col-span-1 px-2 py-1.5 rounded-lg bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-xs text-[var(--color-on-surface)] focus:outline-none">
+                          <option value="dues">Dues</option>
+                          <option value="rental">Rental</option>
+                          <option value="other">Other</option>
+                        </select>
+                        <input name="description" type="text" required defaultValue={row.description} className="col-span-2 px-2 py-1.5 rounded-lg bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-xs text-[var(--color-on-surface)] focus:outline-none" />
+                        <input name="amount" type="number" step="0.01" required defaultValue={row.amount} className="px-2 py-1.5 rounded-lg bg-[var(--color-surface-container)] border border-[var(--color-outline-variant)] text-xs text-[var(--color-on-surface)] focus:outline-none" />
+                        <div className="flex gap-1">
+                          <input name="semester" type="hidden" value={row.semester} />
+                          <input name="year" type="hidden" value={row.year} />
+                          <button type="submit" disabled={editPending} className="px-2 py-1.5 rounded-lg text-xs font-semibold bg-green-900 text-green-200 disabled:opacity-50">{editPending ? "…" : "Save"}</button>
+                          <button type="button" onClick={() => setEditingId(null)} className="px-2 py-1.5 rounded-lg text-xs text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container)]">Cancel</button>
+                        </div>
+                        {editError && <p className="col-span-6 text-xs text-[var(--color-error)]">{editError}</p>}
+                      </form>
+                    </td>
+                  </tr>
+                ) : (
                 <tr key={row.id} className="hover:bg-[var(--color-surface-container-low)] transition-colors">
                   <td className="py-3 pr-4 text-xs text-[var(--color-on-surface-variant)] whitespace-nowrap">
                     {new Date(row.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
@@ -352,15 +396,18 @@ export function IncomeClient({
                     {fmt(row.amount)}
                   </td>
                   <td className="py-3">
-                    <button
-                      onClick={() => handleDelete(row.id)}
-                      className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-error)] transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setEditingId(row.id)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button onClick={() => handleDelete(row.id)} className="text-[var(--color-on-surface-variant)] hover:text-[var(--color-error)] transition-colors">
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

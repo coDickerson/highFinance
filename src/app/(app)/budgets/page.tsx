@@ -33,7 +33,8 @@ export default async function BudgetsPage() {
         budgets: {
           where: { status: "active" },
           include: { transactions: { orderBy: { date: "desc" } } },
-          orderBy: { year: "desc" },
+          orderBy: [{ year: "desc" }, { semester: "desc" }],
+          take: 1,
         },
       },
       orderBy: { name: "asc" },

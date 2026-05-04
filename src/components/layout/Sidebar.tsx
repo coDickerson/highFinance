@@ -16,20 +16,29 @@ const ROLE_RANK: Record<string, number> = { officer: 1, executive: 2, admin: 3 }
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "dashboard", minRole: 1 },
   { label: "Budgets", href: "/budgets", icon: "account_balance_wallet", minRole: 1 },
+  { label: "Fee Tracker", href: "/budgets/fees", icon: "payments", minRole: 3 },
   { label: "Transactions", href: "/transactions", icon: "receipt_long", minRole: 1 },
   { label: "Reimbursement Request", href: "/requests", icon: "request_page", minRole: 1 },
   { label: "Analytics", href: "/admin/analytics", icon: "analytics", minRole: 3 },
   { label: "Roster", href: "/admin/members", icon: "groups", minRole: 2 },
-  { label: "Signups", href: "/admin/signups", icon: "person_add", minRole: 3 },
   { label: "Income", href: "/admin/income", icon: "payments", minRole: 3 },
   { label: "Users", href: "/admin/users", icon: "manage_accounts", minRole: 3 },
 ];
+
+const DASHBOARD_HREF: Record<string, string> = {
+  admin: "/admin/dashboard",
+  executive: "/executive/dashboard",
+  officer: "/officer/dashboard",
+};
 
 export function Sidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const rank = ROLE_RANK[role] ?? 1;
 
-  const visibleItems = NAV_ITEMS.filter((item) => rank >= item.minRole);
+  const dashboardHref = DASHBOARD_HREF[role] ?? "/officer/dashboard";
+  const visibleItems = NAV_ITEMS.filter((item) => rank >= item.minRole).map(
+    (item) => (item.href === "/dashboard" ? { ...item, href: dashboardHref } : item)
+  );
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-[var(--color-surface-container-lowest)] flex flex-col z-40">
@@ -48,10 +57,12 @@ export function Sidebar({ role }: { role: string }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {visibleItems.map((item) => {
-          const active =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
+        {(() => {
+          const activeHref = visibleItems
+            .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
+            .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+          return visibleItems.map((item) => {
+          const active = activeHref === item.href;
           return (
             <Link
               key={item.href}
@@ -66,7 +77,8 @@ export function Sidebar({ role }: { role: string }) {
               {item.label}
             </Link>
           );
-        })}
+        });
+        })()}
       </nav>
 
       {/* Universal Entry CTA */}

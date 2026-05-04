@@ -30,10 +30,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No active budget found" }, { status: 400 });
   }
 
-  // Officers may only post to their own department's budget
+  // Officers may only post to budgets in their assigned departments
   if (!isExecOrAbove) {
-    const budget = await prisma.budget.findUnique({ where: { id: resolvedBudgetId } });
-    if (!budget || budget.departmentId !== user?.departmentId) {
+    const [budget, userDepts] = await Promise.all([
+      prisma.budget.findUnique({ where: { id: resolvedBudgetId } }),
+      prisma.userDepartment.findMany({ where: { userId: session.user.id }, select: { departmentId: true } }),
+    ]);
+    const allowedDeptIds = new Set([
+      ...(user?.departmentId ? [user.departmentId] : []),
+      ...userDepts.map((ud) => ud.departmentId),
+    ]);
+    if (!budget || !allowedDeptIds.has(budget.departmentId)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
@@ -42,11 +49,12 @@ export async function POST(req: Request) {
     data: {
       budgetId: resolvedBudgetId,
       vendor,
-      category,
+      category: category || "",
       amount: parseFloat(amount),
       date: new Date(date),
       notes: notes || null,
       submittedById: session.user.id,
+      status: "approved",  // auto-approve; admin reviews receipts manually
     },
   });
 
