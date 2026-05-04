@@ -50,3 +50,61 @@ export async function deleteBudget(id: string) {
 
   revalidatePath("/budgets");
 }
+
+function csvCell(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+export async function exportHistoricalBudgets(): Promise<string> {
+  const session = await auth();
+  if (!session || !hasMinRole(session.user.role, "admin")) throw new Error("Unauthorized");
+
+  const departments = await prisma.department.findMany({
+    include: {
+      budgets: {
+        include: { transactions: { orderBy: { date: "asc" } } },
+        orderBy: [{ year: "asc" }, { semester: "asc" }],
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  const header = [
+    "Department", "Budget Name", "Semester", "Year", "Budget Status",
+    "Total Budget ($)", "Vendor", "Category", "Amount ($)", "Date", "Transaction Status",
+  ].join(",");
+
+  const rows: string[] = [header];
+
+  for (const dept of departments) {
+    for (const budget of dept.budgets) {
+      const base = [
+        csvCell(dept.name),
+        csvCell(budget.name),
+        budget.semester,
+        String(budget.year),
+        budget.status,
+        Number(budget.totalAmount).toFixed(2),
+      ];
+      if (budget.transactions.length === 0) {
+        rows.push([...base, "", "", "", "", ""].join(","));
+      } else {
+        for (const tx of budget.transactions) {
+          rows.push([
+            ...base,
+            csvCell(tx.vendor),
+            csvCell(tx.category),
+            Number(tx.amount).toFixed(2),
+            tx.date.toISOString().split("T")[0],
+            tx.status,
+          ].join(","));
+        }
+      }
+    }
+  }
+
+  return rows.join("\n");
+}

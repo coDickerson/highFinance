@@ -9,9 +9,20 @@ interface BudgetOption {
   department: { name: string; colorHex: string };
 }
 
+const CATEGORIES = [
+  "Food & Beverage",
+  "Supplies",
+  "Equipment",
+  "Travel",
+  "Marketing",
+  "Events",
+  "Software",
+  "Other",
+];
+
 interface Props {
-  budget?: BudgetOption;       // officer: single fixed budget
-  budgets?: BudgetOption[];    // exec/admin: choosable list
+  budget?: BudgetOption;       // officer: single fixed budget (single dept)
+  budgets?: BudgetOption[];    // exec/admin or multi-dept officers: choosable list
 }
 
 export function TransactionForm({ budget, budgets }: Props) {
@@ -132,16 +143,15 @@ export function TransactionForm({ budget, budgets }: Props) {
         <input type="date" name="date" required className={inputClass} />
       </div>
 
-      {/* Category */}
+      {/* Category — optional dropdown */}
       <div>
-        <label className={labelClass}>Category</label>
-        <input
-          type="text"
-          name="category"
-          placeholder="e.g. Supplies, Travel, Events"
-          required
-          className={inputClass}
-        />
+        <label className={labelClass}>Category <span className="normal-case text-[var(--color-on-surface-variant)]/60">(optional)</span></label>
+        <select name="category" className={inputClass + " cursor-pointer"}>
+          <option value="">— Select a category —</option>
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
       </div>
 
       {error && (

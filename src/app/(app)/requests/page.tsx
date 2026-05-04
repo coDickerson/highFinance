@@ -51,19 +51,27 @@ export default async function RequestsPage() {
           </h2>
           <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
             {requests.length} total
-            {isAdmin && (
-              <> · <Link href="/admin/requests" className="text-[var(--color-primary)] hover:underline">Open Approval Manager →</Link></>
-            )}
           </p>
         </div>
-        <Link
-          href="/requests/new"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
-        >
-          <span className="material-symbols-outlined text-[16px]">add</span>
-          New Reimbursement Request
-        </Link>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Link
+              href="/admin/requests"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[var(--color-surface-container)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-colors"
+            >
+              <span className="material-symbols-outlined text-[16px]">rate_review</span>
+              Approval Manager
+            </Link>
+          )}
+          <Link
+            href="/requests/new"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
+            style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            New Reimbursement Request
+          </Link>
+        </div>
       </div>
 
       <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6">

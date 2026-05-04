@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createUser, resetPassword, deleteUser } from "./actions";
+import { SignupManager } from "@/components/ui/SignupManager";
 
 type Dept = { id: string; name: string; colorHex: string };
 type UserRow = {
@@ -11,6 +12,16 @@ type UserRow = {
   role: string;
   department: { name: string; colorHex: string } | null;
   createdAt: Date;
+};
+type SignupRow = {
+  id: string;
+  name: string;
+  email: string;
+  departmentId: string | null;
+  role: string;
+  status: string;
+  createdAt: string;
+  department: { name: string } | null;
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -28,11 +39,15 @@ const ROLE_COLORS: Record<string, string> = {
 export function UsersClient({
   users,
   departments,
+  signupRequests,
 }: {
   users: UserRow[];
   departments: Dept[];
+  signupRequests: SignupRow[];
 }) {
   const [showForm, setShowForm] = useState(false);
+  const [showSignups, setShowSignups] = useState(false);
+  const pendingSignupCount = signupRequests.filter((r) => r.status === "pending").length;
   const [pendingCreate, setPendingCreate] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [resetTargetId, setResetTargetId] = useState<string | null>(null);
@@ -92,6 +107,24 @@ export function UsersClient({
 
   return (
     <div className="space-y-5">
+      {/* Signup Manager Modal */}
+      {showSignups && (
+        <div className="fixed inset-0 z-50 flex items-stretch">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowSignups(false)} />
+          <div className="relative ml-auto w-full max-w-4xl bg-[var(--color-surface-container-lowest)] shadow-2xl flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-outline-variant)]">
+              <h2 className="font-display text-lg font-bold text-[var(--color-on-surface)]">Signup Approval Manager</h2>
+              <button onClick={() => setShowSignups(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--color-surface-container)] text-[var(--color-on-surface-variant)] transition-colors">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <SignupManager requests={signupRequests} departments={departments} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -102,14 +135,28 @@ export function UsersClient({
             {users.length} user{users.length !== 1 ? "s" : ""} · Add officer accounts for FA26
           </p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
-          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
-        >
-          <span className="material-symbols-outlined text-[16px]">person_add</span>
-          Add Officer
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSignups(true)}
+            className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[var(--color-surface-container)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">how_to_reg</span>
+            Manage Signups
+            {pendingSignupCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--color-error)] text-white text-[10px] font-bold flex items-center justify-center">
+                {pendingSignupCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold"
+            style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+          >
+            <span className="material-symbols-outlined text-[16px]">person_add</span>
+            Add Officer
+          </button>
+        </div>
       </div>
 
       {/* Create user form */}

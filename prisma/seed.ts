@@ -33,11 +33,15 @@ async function main() {
   await prisma.transaction.deleteMany();
   await prisma.budget.deleteMany();
   await prisma.activityLog.deleteMany();
+  await prisma.userDepartment.deleteMany();
   await prisma.user.deleteMany();
   await prisma.signupRequest.deleteMany();
   await prisma.department.deleteMany();
   await prisma.income.deleteMany();
   await prisma.member.deleteMany();
+  await prisma.feeItem.deleteMany();
+  await prisma.feeCategory.deleteMany();
+  await prisma.feeBudget.deleteMany();
 
   // Create the 14 officer positions
   const depts: Record<string, { id: string }> = {};
@@ -85,7 +89,7 @@ async function main() {
   ];
 
   for (const o of officerSeeds) {
-    await prisma.user.create({
+    const officer = await prisma.user.create({
       data: {
         name: o.name,
         email: o.email,
@@ -93,6 +97,10 @@ async function main() {
         role: Role.officer,
         departmentId: depts[o.dept].id,
       },
+    });
+    // Create UserDepartment join row (primary dept)
+    await prisma.userDepartment.create({
+      data: { userId: officer.id, departmentId: depts[o.dept].id },
     });
   }
 

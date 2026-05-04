@@ -26,7 +26,6 @@ export function ReimbursementForm({ departments, defaultDepartmentId, isAdmin = 
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const needsVenmoZelle = paymentMethod === "venmo" || paymentMethod === "zelle";
 
   function handleReceiptChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -127,21 +126,17 @@ export function ReimbursementForm({ departments, defaultDepartmentId, isAdmin = 
         </div>
       </div>
 
-      {/* Venmo / Zelle address — only shown when relevant */}
-      {needsVenmoZelle && (
-        <div>
-          <label className={labelClass}>
-            {paymentMethod === "venmo" ? "Venmo" : "Zelle"} Address
-          </label>
-          <input
-            type="text"
-            name="venmoZelle"
-            placeholder={paymentMethod === "venmo" ? "@username" : "email or phone"}
-            required
-            className={inputClass}
-          />
-        </div>
-      )}
+      {/* Venmo / Zelle — always required (payment destination) */}
+      <div>
+        <label className={labelClass}>Venmo/Zelle (payment destination)</label>
+        <input
+          type="text"
+          name="venmoZelle"
+          placeholder="@venmo-username or email/phone for Zelle"
+          required
+          className={inputClass}
+        />
+      </div>
 
       {/* Description */}
       <div>

@@ -214,7 +214,9 @@ export function BudgetsAdminClient({ budgets, departments, isAdmin }: Props) {
               Active budgets across all positions
             </p>
           </div>
-          {isAdmin && <CreateBudgetForm departments={departments} />}
+          {isAdmin && (
+            <CreateBudgetForm departments={departments} />
+          )}
         </div>
 
         {budgets.length === 0 ? (

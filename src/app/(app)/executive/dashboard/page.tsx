@@ -4,7 +4,7 @@ import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { BudgetCard } from "@/components/ui/BudgetCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { getCurrentSemester } from "@/lib/semester";
+import { getCurrentSemester, getCalendarYear } from "@/lib/semester";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -16,6 +16,7 @@ export default async function ExecutiveDashboardPage() {
   if (!session || !hasMinRole(session.user.role, "executive")) redirect("/dashboard");
 
   const semester = getCurrentSemester();
+  const calYear = getCalendarYear();
 
   const departments = await prisma.department.findMany({
     include: {
@@ -45,6 +46,17 @@ export default async function ExecutiveDashboardPage() {
 
   const totalAssets = allBudgets.reduce((s, b) => s + b.totalAmount, 0);
   const totalSpent = allBudgets.reduce((s, b) => s + b.spent, 0);
+
+  const calYearBudgets = await prisma.budget.findMany({
+    where: { year: calYear.year },
+    include: { transactions: { where: { status: "approved" } } },
+  });
+  const calYearAllocated = calYearBudgets.reduce((s, b) => s + Number(b.totalAmount), 0);
+  const calYearSpent = calYearBudgets.reduce(
+    (s, b) => s + b.transactions.reduce((ts, t) => ts + Math.abs(Number(t.amount)), 0),
+    0
+  );
+  const calYearPct = calYearAllocated > 0 ? Math.round((calYearSpent / calYearAllocated) * 100) : 0;
 
   const pendingApprovals = await prisma.reimbursementRequest.findMany({
     where: { status: "pending" },
@@ -77,49 +89,43 @@ export default async function ExecutiveDashboardPage() {
         </Link>
       </div>
 
-      {/* Hero — consolidated assets */}
-      <div
-        className="rounded-2xl p-6 text-white"
+      {/* Calendar Year Budget Hero */}
+      <Link
+        href="/budgets"
+        className="rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
         style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
       >
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div className="flex items-start justify-between mb-1">
+          <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">
+            {calYear.label} Calendar Year Budget
+          </p>
+          <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+            SP{String(calYear.year).slice(2)} + FA{String(calYear.year).slice(2)}
+          </span>
+        </div>
+        <div className="flex items-end justify-between mb-4 mt-2">
           <div>
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">
-              Total Consolidated Assets
-            </p>
-            <p className="font-display text-4xl font-extrabold">
-              {fmt(totalAssets)}
-            </p>
-            <div className="flex gap-6 mt-4">
-              <div>
-                <p className="text-white/50 text-xs">Liquid Cash</p>
-                <p className="font-semibold">{fmt(totalAssets - totalSpent)}</p>
-              </div>
-              <div>
-                <p className="text-white/50 text-xs">Committed</p>
-                <p className="font-semibold">{fmt(totalSpent * 0.7)}</p>
-              </div>
-              <div>
-                <p className="text-white/50 text-xs">Pending Approval</p>
-                <p className="font-semibold">{fmt(totalSpent * 0.3)}</p>
-              </div>
-            </div>
+            <p className="text-white/50 text-xs mb-0.5">Total Allocated</p>
+            <p className="font-display text-4xl font-extrabold">{fmt(calYearAllocated)}</p>
           </div>
-
-          {/* Monthly run-rate mini */}
-          <div className="bg-white/10 rounded-xl p-4 lg:w-56">
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">
-              Monthly Run-Rate
-            </p>
-            <p className="font-display text-2xl font-bold">{fmt(totalSpent / 10)}</p>
-            <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--color-secondary-container)] text-[var(--color-on-secondary-container)]">
-              Stable
-            </span>
+          <div className="text-right">
+            <p className="text-white/50 text-xs mb-0.5">Spent</p>
+            <p className="font-display text-2xl font-bold text-white/70">{fmt(calYearSpent)}</p>
           </div>
         </div>
-      </div>
+        <div className="w-full h-2 rounded-full bg-white/20 mb-2">
+          <div
+            className="h-full rounded-full bg-[var(--color-secondary-container)]"
+            style={{ width: `${Math.min(calYearPct, 100)}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-white/50">
+          <span>{calYearPct}% utilized · {fmt(calYearAllocated - calYearSpent)} remaining</span>
+          <span>{calYearBudgets.length} budget{calYearBudgets.length !== 1 ? "s" : ""} · View Budgets →</span>
+        </div>
+      </Link>
 
-      {/* Department Budgets */}
+      {/* Active Department Budgets */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display font-semibold text-[var(--color-on-surface)]">
@@ -136,10 +142,6 @@ export default async function ExecutiveDashboardPage() {
           {allBudgets.map((b) => (
             <BudgetCard key={b.id} {...b} />
           ))}
-          <button className="rounded-2xl border-2 border-dashed border-[var(--color-surface-container-high)] hover:border-[var(--color-primary)] transition-colors p-6 flex flex-col items-center justify-center gap-2 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)]">
-            <span className="material-symbols-outlined text-[28px]">add_circle</span>
-            <span className="text-sm font-medium">New Department</span>
-          </button>
         </div>
       </div>
 
@@ -183,9 +185,6 @@ export default async function ExecutiveDashboardPage() {
               </div>
             ))}
           </div>
-          <button className="mt-4 w-full text-center text-xs text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] transition-colors font-medium py-2">
-            Download Full Ledger Report (PDF)
-          </button>
         </div>
       )}
     </div>
