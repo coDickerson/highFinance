@@ -4,6 +4,7 @@ import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { SpendingToggleChart } from "@/components/ui/SpendingToggleChart";
 import { getCurrentSemester, getCalendarYear } from "@/lib/semester";
+import { getPositionBudgetsCached } from "@/lib/ledger";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -32,10 +33,10 @@ export default async function AdminDashboardPage() {
     include: { transactions: { where: { status: "approved" } } },
   });
 
-  const calYearAllocated = calYearBudgets.reduce(
-    (sum, b) => sum + Number(b.totalAmount),
-    0
-  );
+  // Allocated total comes from the spreadsheet (source of truth), so it matches
+  // the Budgets page; spend is computed from the app's own transactions.
+  const positionBudgets = await getPositionBudgetsCached();
+  const calYearAllocated = positionBudgets.reduce((sum, p) => sum + p.planned, 0);
   const calYearSpent = calYearBudgets.reduce(
     (sum, b) =>
       sum + b.transactions.reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
@@ -49,23 +50,14 @@ export default async function AdminDashboardPage() {
   const [
     pendingCount,
     pendingSignups,
-    paidCount,
-    totalMembers,
-    duesAggregate,
-    feesTotal,
     recentTx,
     recentStatusChanged,
     recentPendingReqs,
     recentBudgets,
-    recentMembers,
     recentTransactions,
   ] = await Promise.all([
     prisma.reimbursementRequest.count({ where: { status: "pending" } }),
     prisma.signupRequest.count({ where: { status: "pending" } }),
-    prisma.member.count({ where: { duesStatus: "paid" } }),
-    prisma.member.count(),
-    prisma.member.aggregate({ _sum: { duesPaid: true, duesOwed: true } }),
-    prisma.feeItem.aggregate({ _sum: { estimatedTotal: true, actualTotal: true } }),
     prisma.transaction.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -88,7 +80,6 @@ export default async function AdminDashboardPage() {
       take: 3,
       include: { department: { select: { name: true } } },
     }),
-    prisma.member.findMany({ orderBy: { createdAt: "desc" }, take: 3 }),
     prisma.transaction.findMany({
       where: { status: "approved" },
       orderBy: { date: "desc" },
@@ -99,13 +90,6 @@ export default async function AdminDashboardPage() {
       },
     }),
   ]);
-
-  const duesCollected = Number(duesAggregate._sum.duesPaid ?? 0);
-  const duesTarget = Number(duesAggregate._sum.duesOwed ?? 0);
-  const duesPct = duesTarget > 0 ? Math.round((duesCollected / duesTarget) * 100) : 0;
-  const feesEstimated = Number(feesTotal._sum.estimatedTotal ?? 0);
-  const feesActual = Number(feesTotal._sum.actualTotal ?? 0);
-  const feesPct = feesEstimated > 0 ? Math.min(100, Math.round((feesActual / feesEstimated) * 100)) : 0;
 
   // Build notifications list from all event types
   type NotifItem = { id: string; icon: string; message: string; time: Date };
@@ -133,12 +117,6 @@ export default async function AdminDashboardPage() {
       icon: "account_balance_wallet",
       message: `Budget "${b.name}" created for ${b.department.name}`,
       time: b.createdAt,
-    })),
-    ...recentMembers.map((m) => ({
-      id: `member-${m.id}`,
-      icon: "person_add",
-      message: `${m.name} was added to the roster`,
-      time: m.createdAt,
     })),
   ]
     .sort((a, b) => b.time.getTime() - a.time.getTime())
@@ -170,7 +148,7 @@ export default async function AdminDashboardPage() {
           Admin Command Center
         </h2>
         <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-          {semester} performance and member overview
+          {`${semester} budget & request overview`}
         </p>
       </div>
 
@@ -210,95 +188,44 @@ export default async function AdminDashboardPage() {
         </div>
       </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* Dues Performance */}
-        <Link
-          href="/admin/income"
-          className="rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
-          style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)" }}
-        >
-          <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">
-            {semester} Dues Performance
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {/* Pending Requests */}
+        <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6 border-l-4 border-[var(--color-on-tertiary-container)] flex flex-col">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">
+            Pending Requests
           </p>
-          <div className="flex items-end justify-between mb-4">
-            <p className="font-display text-3xl font-extrabold">{fmt(duesCollected)}</p>
-            <p className="font-display text-2xl font-bold text-white/70">{duesPct}%</p>
-          </div>
-          <div className="w-full h-2 rounded-full bg-white/20 mb-2">
-            <div
-              className="h-full rounded-full bg-[var(--color-secondary-container)]"
-              style={{ width: `${Math.min(duesPct, 100)}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-white/50">
-            <span>Collected: {fmt(duesCollected)}</span>
-            <span>Outstanding: {fmt(Math.max(0, duesTarget - duesCollected))}</span>
-          </div>
-          <p className="text-xs text-white/40 mt-3">
-            {paidCount} of {totalMembers} members have paid · View Income →
+          <p className="font-display text-4xl font-extrabold text-[var(--color-on-surface)] mb-1">
+            {pendingCount}
           </p>
-        </Link>
+          <p className="text-xs text-[var(--color-on-surface-variant)] mb-3">
+            Reimbursements awaiting review
+          </p>
+          <Link
+            href="/admin/requests"
+            className="mt-auto flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl text-white text-sm font-semibold"
+            style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+          >
+            Review Entries →
+          </Link>
+        </div>
 
-        {/* Fees Paid */}
-        <Link
-          href="/budgets/fees"
-          className="rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
-          style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" }}
-        >
-          <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">
-            {semester} Fees Paid
+        {/* Pending Signups */}
+        <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6 border-l-4 border-[var(--color-outline-variant)] flex flex-col">
+          <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">
+            Pending Signups
           </p>
-          <p className="font-display text-3xl font-extrabold mt-2 mb-1">{fmt(feesActual)}</p>
-          <p className="text-xs text-white/50 mb-3">of {fmt(feesEstimated)} estimated</p>
-          <div className="w-full bg-white/10 rounded-full h-1.5 mb-1">
-            <div
-              className="bg-white/70 h-1.5 rounded-full transition-all"
-              style={{ width: `${feesPct}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-white/40">
-            <span>{feesPct}% paid</span>
-            <span>View Fees →</span>
-          </div>
-        </Link>
-
-        {/* Pending sidebar */}
-        <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6 border-l-4 border-[var(--color-on-tertiary-container)] space-y-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">
-              Pending Requests
-            </p>
-            <p className="font-display text-4xl font-extrabold text-[var(--color-on-surface)] mb-1">
-              {pendingCount}
-            </p>
-            <p className="text-xs text-[var(--color-on-surface-variant)] mb-2">
-              Reimbursements awaiting review
-            </p>
-            <Link
-              href="/admin/requests"
-              className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl text-white text-sm font-semibold"
-              style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
-            >
-              Review Entries →
-            </Link>
-          </div>
-          <div className="border-t border-[var(--color-outline-variant)] pt-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">
-              Pending Signups
-            </p>
-            <p className="font-display text-3xl font-extrabold text-[var(--color-on-surface)] mb-1">
-              {pendingSignups}
-            </p>
-            <p className="text-xs text-[var(--color-on-surface-variant)] mb-2">
-              Awaiting account approval
-            </p>
-            <Link
-              href="/admin/signups"
-              className="flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl text-sm font-semibold bg-[var(--color-surface-container)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-colors"
-            >
-              Review Signups →
-            </Link>
-          </div>
+          <p className="font-display text-4xl font-extrabold text-[var(--color-on-surface)] mb-1">
+            {pendingSignups}
+          </p>
+          <p className="text-xs text-[var(--color-on-surface-variant)] mb-3">
+            Awaiting account approval
+          </p>
+          <Link
+            href="/admin/signups"
+            className="mt-auto flex items-center justify-center gap-2 w-full py-2 px-4 rounded-xl text-sm font-semibold bg-[var(--color-surface-container)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] transition-colors"
+          >
+            Review Signups →
+          </Link>
         </div>
       </div>
 
