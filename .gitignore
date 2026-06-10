@@ -37,6 +37,15 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Google service-account keys (secrets — never commit)
+treasurer-app-*.json
+*-service-account*.json
+gcp-*.json
+
+# misc local clutter
+.playwright-mcp/
+.Rhistory
+
 # vercel
 .vercel
 
@@ -45,3 +54,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# local design-review screenshots
+screenshots/
