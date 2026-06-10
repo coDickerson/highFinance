@@ -5,6 +5,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { getCurrentSemester } from "@/lib/semester";
+import { getPlannedBudgetMap, resolvePosition } from "@/lib/ledger";
 import Link from "next/link";
 function fmt(n: { toFixed?: (d: number) => string } | number | string) {
   return Number(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -48,19 +49,14 @@ export default async function OfficerDashboardPage() {
       })
     : [];
 
-  // Primary budget for the summary card (most recent active budget)
-  const budget = budgets[0] ?? null;
-
-  const spent = budget
-    ? budget.transactions
-        .filter((t) => t.status === "approved")
-        .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0)
-    : 0;
-
-  const available = budget ? Number(budget.totalAmount) - spent : 0;
-  const utilPct = budget && Number(budget.totalAmount) > 0
-    ? Math.round((spent / Number(budget.totalAmount)) * 100)
-    : 0;
+  // Budget totals come from the spreadsheet's Officer Allocations tab (source of
+  // truth); fall back to the DB amount only if a position isn't found there.
+  const plannedMap = await getPlannedBudgetMap();
+  const budgetTotal = (b: { department: { name: string }; totalAmount: unknown }) => {
+    const pos = resolvePosition(b.department.name);
+    const planned = pos ? plannedMap.get(pos) : undefined;
+    return planned && planned > 0 ? planned : Number(b.totalAmount);
+  };
 
   const [pendingCount, recentRequests] = await Promise.all([
     prisma.reimbursementRequest.count({
@@ -101,9 +97,10 @@ export default async function OfficerDashboardPage() {
             </div>
           ) : (
             budgets.map((b) => {
+              const bTotal = budgetTotal(b);
               const bSpent = b.transactions.filter((t) => t.status === "approved").reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
-              const bAvail = Number(b.totalAmount) - bSpent;
-              const bPct = Number(b.totalAmount) > 0 ? Math.round((bSpent / Number(b.totalAmount)) * 100) : 0;
+              const bAvail = bTotal - bSpent;
+              const bPct = bTotal > 0 ? Math.round((bSpent / bTotal) * 100) : 0;
               return (
                 <Link key={b.id} href="/budgets" className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6 block hover:bg-[var(--color-surface-container-low)] transition-colors">
                   <div className="flex items-start justify-between mb-4">
@@ -122,10 +119,10 @@ export default async function OfficerDashboardPage() {
                     </div>
                     <div className="ml-auto text-right">
                       <p className="text-xs text-[var(--color-on-surface-variant)] mb-0.5">Total Budget</p>
-                      <p className="font-display text-lg font-semibold text-[var(--color-on-surface-variant)]">{fmt(b.totalAmount)}</p>
+                      <p className="font-display text-lg font-semibold text-[var(--color-on-surface-variant)]">{fmt(bTotal)}</p>
                     </div>
                   </div>
-                  <ProgressBar value={bSpent} max={Number(b.totalAmount)} />
+                  <ProgressBar value={bSpent} max={bTotal} />
                   <div className="flex justify-between mt-1.5 text-xs text-[var(--color-on-surface-variant)]">
                     <span>{bPct}% Utilized</span>
                     <span>{fmt(bAvail)} remaining</span>

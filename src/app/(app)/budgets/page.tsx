@@ -4,6 +4,7 @@ import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { getPlannedBudgetMap, resolvePosition } from "@/lib/ledger";
 import { BudgetsAdminClient } from "./BudgetsAdminClient";
 import Link from "next/link";
 
@@ -25,6 +26,15 @@ export default async function BudgetsPage() {
     where: { id: session.user.id },
     include: { department: true },
   });
+
+  // Budget totals come from the spreadsheet's Officer Allocations tab (source of
+  // truth); fall back to the DB amount only if a position isn't found there.
+  const plannedMap = await getPlannedBudgetMap();
+  const sheetTotal = (deptName: string, dbAmount: number) => {
+    const pos = resolvePosition(deptName);
+    const planned = pos ? plannedMap.get(pos) : undefined;
+    return planned && planned > 0 ? planned : dbAmount;
+  };
 
   // ── Exec / Admin: card-grid with inline drawer ──────────────────────────────
   if (isExecOrAbove) {
@@ -50,7 +60,7 @@ export default async function BudgetsPage() {
           name: d.name,
           description: d.description ?? undefined,
           colorHex: d.colorHex,
-          totalAmount: Number(b.totalAmount),
+          totalAmount: sheetTotal(d.name, Number(b.totalAmount)),
           spent,
           transactionCount: b.transactions.length,
           semester: semesterLabel(b.semester, b.year),
@@ -114,8 +124,9 @@ export default async function BudgetsPage() {
   const spent = budget.transactions
     .filter((t) => t.status === "approved")
     .reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
-  const available = Number(budget.totalAmount) - spent;
-  const utilPct = Math.round((spent / Number(budget.totalAmount)) * 100);
+  const total = sheetTotal(budget.department.name, Number(budget.totalAmount));
+  const available = total - spent;
+  const utilPct = total > 0 ? Math.round((spent / total) * 100) : 0;
 
   return (
     <div className="space-y-5">
@@ -140,11 +151,11 @@ export default async function BudgetsPage() {
           <div className="ml-auto text-right">
             <p className="text-xs text-[var(--color-on-surface-variant)] mb-0.5">Total Budget</p>
             <p className="font-display text-lg font-semibold text-[var(--color-on-surface-variant)]">
-              {fmt(Number(budget.totalAmount))}
+              {fmt(total)}
             </p>
           </div>
         </div>
-        <ProgressBar value={spent} max={Number(budget.totalAmount)} />
+        <ProgressBar value={spent} max={total} />
         <div className="flex justify-between mt-1.5 text-xs text-[var(--color-on-surface-variant)]">
           <span>{utilPct}% utilized</span>
           <span>{fmt(available)} remaining</span>
