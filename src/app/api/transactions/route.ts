@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@/auth";
 import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
+import { recordSpend, resolvePosition } from "@/lib/ledger";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -56,6 +57,28 @@ export async function POST(req: Request) {
       submittedById: session.user.id,
       status: "approved",  // auto-approve; admin reviews receipts manually
     },
+  });
+
+  // Push the spend into the spreadsheet's Officer Budget Tracking matrix.
+  // Runs after the response is sent (best-effort) so it never delays or fails
+  // the officer's submission.
+  after(async () => {
+    try {
+      const budget = await prisma.budget.findUnique({
+        where: { id: resolvedBudgetId },
+        include: { department: true },
+      });
+      const position = budget?.department?.name
+        ? resolvePosition(budget.department.name)
+        : null;
+      if (position) {
+        await recordSpend(position, parseFloat(amount), vendor || category || undefined);
+      } else if (budget?.department?.name) {
+        console.warn(`Sheets sync: no position mapping for department "${budget.department.name}"`);
+      }
+    } catch (e) {
+      console.error("Sheets sync (transaction) failed:", e);
+    }
   });
 
   return NextResponse.json(transaction, { status: 201 });

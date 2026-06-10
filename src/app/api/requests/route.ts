@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { appendReimbursement } from "@/lib/ledger";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
@@ -50,22 +51,53 @@ export async function POST(req: Request) {
   });
 
   // Save receipt if provided
+  let receiptUrl = "";
   if (receipt && receipt.size > 0) {
     const ext = receipt.name.split(".").pop() ?? "jpg";
     const filename = `${randomUUID()}.${ext}`;
     const uploadDir = join(process.cwd(), "public", "uploads");
     const bytes = await receipt.arrayBuffer();
     await writeFile(join(uploadDir, filename), Buffer.from(bytes));
+    receiptUrl = `/uploads/${filename}`;
 
     await prisma.receipt.create({
       data: {
         requestId: request.id,
         filename: receipt.name,
-        url: `/uploads/${filename}`,
+        url: receiptUrl,
         mimeType: receipt.type || "image/jpeg",
       },
     });
   }
+
+  // Append the reimbursement to the spreadsheet's Reimbursements tab.
+  // Runs after the response is sent (best-effort) so it never delays or fails
+  // the submission.
+  const submitterId = session.user.id;
+  after(async () => {
+    try {
+      const [dept, submitter] = await Promise.all([
+        prisma.department.findUnique({ where: { id: departmentId } }),
+        prisma.user.findUnique({ where: { id: submitterId } }),
+      ]);
+      await appendReimbursement({
+        email: submitter?.email ?? "",
+        name: submitter?.name ?? "",
+        berkeleyEmail: submitter?.email ?? "",
+        phone: "",
+        venmo: venmoZelle ?? "",
+        amount: parseFloat(amount),
+        paymentMethod: paymentMethod ?? "",
+        budget: dept?.name ?? "",
+        purpose: description ?? "",
+        receiptUrl,
+        status: isAdmin ? "Approved" : "Pending",
+        requestId: request.id,
+      });
+    } catch (e) {
+      console.error("Sheets sync (reimbursement) failed:", e);
+    }
+  });
 
   return NextResponse.json(request, { status: 201 });
 }
