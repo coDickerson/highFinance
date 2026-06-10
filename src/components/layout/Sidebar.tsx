@@ -3,45 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-
-type NavItem = {
-  label: string;
-  href: string;
-  icon: string;
-  minRole: number;
-};
-
-const ROLE_RANK: Record<string, number> = { officer: 1, executive: 2, admin: 3 };
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: "dashboard", minRole: 1 },
-  { label: "Budgets", href: "/budgets", icon: "account_balance_wallet", minRole: 1 },
-  { label: "Fee Tracker", href: "/budgets/fees", icon: "payments", minRole: 3 },
-  { label: "Transactions", href: "/transactions", icon: "receipt_long", minRole: 1 },
-  { label: "Reimbursement Request", href: "/requests", icon: "request_page", minRole: 1 },
-  { label: "Analytics", href: "/admin/analytics", icon: "analytics", minRole: 3 },
-  { label: "Roster", href: "/admin/members", icon: "groups", minRole: 2 },
-  { label: "Income", href: "/admin/income", icon: "payments", minRole: 3 },
-  { label: "Users", href: "/admin/users", icon: "manage_accounts", minRole: 3 },
-];
-
-const DASHBOARD_HREF: Record<string, string> = {
-  admin: "/admin/dashboard",
-  executive: "/executive/dashboard",
-  officer: "/officer/dashboard",
-};
+import { getVisibleNav, activeHref } from "./nav-items";
 
 export function Sidebar({ role }: { role: string }) {
   const pathname = usePathname();
-  const rank = ROLE_RANK[role] ?? 1;
-
-  const dashboardHref = DASHBOARD_HREF[role] ?? "/officer/dashboard";
-  const visibleItems = NAV_ITEMS.filter((item) => rank >= item.minRole).map(
-    (item) => (item.href === "/dashboard" ? { ...item, href: dashboardHref } : item)
-  );
+  const visibleItems = getVisibleNav(role);
+  const active = activeHref(pathname, visibleItems);
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-[var(--color-surface-container-lowest)] flex flex-col z-40">
+    <aside className="hidden md:flex fixed left-0 top-0 h-full w-64 bg-[var(--color-surface-container-lowest)] flex-col z-40">
       {/* Branding */}
       <div className="px-5 py-6 border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -57,28 +27,20 @@ export function Sidebar({ role }: { role: string }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {(() => {
-          const activeHref = visibleItems
-            .filter((i) => pathname === i.href || pathname.startsWith(i.href + "/"))
-            .sort((a, b) => b.href.length - a.href.length)[0]?.href;
-          return visibleItems.map((item) => {
-          const active = activeHref === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${
-                active
-                  ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] translate-x-0.5 border-r-2 border-[var(--color-primary)]"
-                  : "text-white/60 hover:bg-white/8 hover:text-white/90"
-              }`}
-            >
-              <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        });
-        })()}
+        {visibleItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${
+              active === item.href
+                ? "bg-[var(--color-primary)]/15 text-[var(--color-primary)] translate-x-0.5 border-r-2 border-[var(--color-primary)]"
+                : "text-white/60 hover:bg-white/8 hover:text-white/90"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+            {item.label}
+          </Link>
+        ))}
       </nav>
 
       {/* Universal Entry CTA */}
