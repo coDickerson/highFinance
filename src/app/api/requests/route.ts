@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { appendReimbursement } from "@/lib/ledger";
 import { saveReceipt } from "@/lib/storage";
+import { hasMinRole } from "@/lib/permissions";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -30,6 +31,23 @@ export async function POST(req: Request) {
   // Receipt is required for non-admin users only
   if (!isAdmin && (!receipt || receipt.size === 0)) {
     return NextResponse.json({ error: "Receipt image is required" }, { status: 400 });
+  }
+
+  // Officers may only submit reimbursements against departments they belong to.
+  // departmentId comes from the client, so it must be authorized server-side —
+  // mirrors the check in /api/transactions. Exec+ may submit for any department.
+  if (!hasMinRole(session.user.role, "executive")) {
+    const [user, userDepts] = await Promise.all([
+      prisma.user.findUnique({ where: { id: session.user.id }, select: { departmentId: true } }),
+      prisma.userDepartment.findMany({ where: { userId: session.user.id }, select: { departmentId: true } }),
+    ]);
+    const allowedDeptIds = new Set([
+      ...(user?.departmentId ? [user.departmentId] : []),
+      ...userDepts.map((ud) => ud.departmentId),
+    ]);
+    if (!allowedDeptIds.has(departmentId)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   const request = await prisma.reimbursementRequest.create({
