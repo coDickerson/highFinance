@@ -46,14 +46,13 @@ export function BudgetsAdminClient({ budgets, departments, isAdmin }: Props) {
 
   const selected = budgets.find((b) => b.id === selectedId) ?? null;
 
-  // Trigger enter animation after mount
+  // Trigger enter animation after the drawer opens. The exit animation is
+  // driven by close(), which sets mounted=false before clearing selectedId, so
+  // no reset is needed here.
   useEffect(() => {
-    if (selectedId) {
-      const t = setTimeout(() => setMounted(true), 10);
-      return () => clearTimeout(t);
-    } else {
-      setMounted(false);
-    }
+    if (!selectedId) return;
+    const t = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(t);
   }, [selectedId]);
 
   function open(id: string) {

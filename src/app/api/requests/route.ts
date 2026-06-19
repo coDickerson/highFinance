@@ -2,9 +2,7 @@ import { NextResponse, after } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { appendReimbursement } from "@/lib/ledger";
-import { writeFile } from "fs/promises";
-import { join } from "path";
-import { randomUUID } from "crypto";
+import { saveReceipt } from "@/lib/storage";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -53,12 +51,7 @@ export async function POST(req: Request) {
   // Save receipt if provided
   let receiptUrl = "";
   if (receipt && receipt.size > 0) {
-    const ext = receipt.name.split(".").pop() ?? "jpg";
-    const filename = `${randomUUID()}.${ext}`;
-    const uploadDir = join(process.cwd(), "public", "uploads");
-    const bytes = await receipt.arrayBuffer();
-    await writeFile(join(uploadDir, filename), Buffer.from(bytes));
-    receiptUrl = `/uploads/${filename}`;
+    receiptUrl = await saveReceipt(receipt);
 
     await prisma.receipt.create({
       data: {
