@@ -50,7 +50,7 @@ export function SignupForm({ departments }: Props) {
         <div>
           <p className="font-display font-bold text-[var(--color-on-surface)] text-lg">Request submitted</p>
           <p className="text-[var(--color-on-surface-variant)] text-sm mt-1">
-            An admin will review your request. You'll be notified when it's approved.
+            An admin will review your request. You&apos;ll be notified when it&apos;s approved.
           </p>
         </div>
         <Link
