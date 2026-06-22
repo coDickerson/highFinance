@@ -5,8 +5,7 @@ import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getPlannedBudgetMap, resolvePosition } from "@/lib/ledger";
-import { resolveTerm } from "@/lib/term";
-import { SemesterFilter } from "@/components/ui/SemesterFilter";
+import { resolveTerm, DEFAULT_TERM } from "@/lib/term";
 import { BudgetsAdminClient } from "./BudgetsAdminClient";
 import Link from "next/link";
 
@@ -26,10 +25,11 @@ export default async function BudgetsPage({
   const session = await auth();
   if (!session) redirect("/login");
 
-  const term = resolveTerm((await searchParams).term);
-
   const isExecOrAbove = hasMinRole(session.user.role, "executive");
   const isAdmin = hasMinRole(session.user.role, "admin");
+
+  // Semester switching is admin-only for now; everyone else is pinned to FA26.
+  const term = isAdmin ? resolveTerm((await searchParams).term) : DEFAULT_TERM;
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: { department: true },
@@ -121,11 +121,10 @@ export default async function BudgetsPage({
   if (!budget) {
     return (
       <div className="space-y-5">
-        <div className="flex items-center justify-between">
+        <div>
           <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
             My Budget
           </h2>
-          <SemesterFilter activeKey={term.key} basePath="/budgets" />
         </div>
         <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-8 text-center">
           <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-4xl mb-3 block">
@@ -151,16 +150,13 @@ export default async function BudgetsPage({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
-            {budget.name}
-          </h2>
-          <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-            {budget.department.name} · {semesterLabel(budget.semester, budget.year)}
-          </p>
-        </div>
-        <SemesterFilter activeKey={term.key} basePath="/budgets" />
+      <div>
+        <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
+          {budget.name}
+        </h2>
+        <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
+          {budget.department.name} · {semesterLabel(budget.semester, budget.year)}
+        </p>
       </div>
 
       {/* Budget summary */}
