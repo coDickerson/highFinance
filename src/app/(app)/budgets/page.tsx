@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getPlannedBudgetMap, resolvePosition } from "@/lib/ledger";
+import { resolveTerm } from "@/lib/term";
+import { SemesterFilter } from "@/components/ui/SemesterFilter";
 import { BudgetsAdminClient } from "./BudgetsAdminClient";
 import Link from "next/link";
 
@@ -16,9 +18,15 @@ function semesterLabel(s: string, y: number) {
   return `${s === "fall" ? "FA" : "SP"}${String(y).slice(2)}`;
 }
 
-export default async function BudgetsPage() {
+export default async function BudgetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ term?: string }>;
+}) {
   const session = await auth();
   if (!session) redirect("/login");
+
+  const term = resolveTerm((await searchParams).term);
 
   const isExecOrAbove = hasMinRole(session.user.role, "executive");
   const isAdmin = hasMinRole(session.user.role, "admin");
@@ -41,7 +49,7 @@ export default async function BudgetsPage() {
     const departments = await prisma.department.findMany({
       include: {
         budgets: {
-          where: { status: "active" },
+          where: { status: "active", semester: term.semester, year: term.year },
           include: { transactions: { orderBy: { date: "desc" } } },
           orderBy: [{ year: "desc" }, { semester: "desc" }],
           take: 1,
@@ -81,14 +89,24 @@ export default async function BudgetsPage() {
       : [];
 
     return (
-      <BudgetsAdminClient budgets={budgets} departments={allDepts} isAdmin={isAdmin} />
+      <BudgetsAdminClient
+        budgets={budgets}
+        departments={allDepts}
+        isAdmin={isAdmin}
+        activeTermKey={term.key}
+      />
     );
   }
 
   // ── Officer: expanded single-budget view ────────────────────────────────────
   const budget = user?.departmentId
     ? await prisma.budget.findFirst({
-        where: { departmentId: user.departmentId, status: "active" },
+        where: {
+          departmentId: user.departmentId,
+          status: "active",
+          semester: term.semester,
+          year: term.year,
+        },
         include: {
           department: true,
           transactions: {
@@ -103,18 +121,21 @@ export default async function BudgetsPage() {
   if (!budget) {
     return (
       <div className="space-y-5">
-        <div>
+        <div className="flex items-center justify-between">
           <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
             My Budget
           </h2>
+          <SemesterFilter activeKey={term.key} basePath="/budgets" />
         </div>
         <div className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-8 text-center">
           <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-4xl mb-3 block">
             account_balance_wallet
           </span>
-          <p className="text-[var(--color-on-surface)] font-medium mb-1">No active budget assigned</p>
+          <p className="text-[var(--color-on-surface)] font-medium mb-1">
+            No active budget for {term.label}
+          </p>
           <p className="text-[var(--color-on-surface-variant)] text-sm">
-            Contact your treasurer to set up your FA26 budget.
+            Contact your treasurer to set up your {term.short} budget.
           </p>
         </div>
       </div>
@@ -130,13 +151,16 @@ export default async function BudgetsPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
-          {budget.name}
-        </h2>
-        <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-          {budget.department.name} · {semesterLabel(budget.semester, budget.year)}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
+            {budget.name}
+          </h2>
+          <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
+            {budget.department.name} · {semesterLabel(budget.semester, budget.year)}
+          </p>
+        </div>
+        <SemesterFilter activeKey={term.key} basePath="/budgets" />
       </div>
 
       {/* Budget summary */}

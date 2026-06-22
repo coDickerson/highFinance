@@ -4,18 +4,23 @@ import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MetricCard } from "@/components/ui/MetricCard";
-import { getCurrentSemester } from "@/lib/semester";
 import { getPlannedBudgetMap, resolvePosition } from "@/lib/ledger";
+import { resolveTerm } from "@/lib/term";
+import { SemesterFilter } from "@/components/ui/SemesterFilter";
 import Link from "next/link";
 function fmt(n: { toFixed?: (d: number) => string } | number | string) {
   return Number(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-export default async function OfficerDashboardPage() {
+export default async function OfficerDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ term?: string }>;
+}) {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const semester = getCurrentSemester();
+  const term = resolveTerm((await searchParams).term);
 
   // Fetch all departments this officer is assigned to (primary + extra)
   const user = await prisma.user.findUnique({
@@ -37,7 +42,12 @@ export default async function OfficerDashboardPage() {
 
   const budgets = deptIds.length > 0
     ? await prisma.budget.findMany({
-        where: { departmentId: { in: deptIds }, status: "active" },
+        where: {
+          departmentId: { in: deptIds },
+          status: "active",
+          semester: term.semester,
+          year: term.year,
+        },
         orderBy: [{ year: "desc" }, { semester: "desc" }],
         include: {
           department: true,
@@ -77,13 +87,16 @@ export default async function OfficerDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
-          Welcome back, {session.user.name?.split(" ")[0]}
-        </h2>
-        <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-          {budgets.length > 0 ? `${budgets.map(b => b.department.name).join(" & ")} budget${budgets.length > 1 ? "s" : ""}` : "Your budgets"} · {semester}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
+            Welcome back, {session.user.name?.split(" ")[0]}
+          </h2>
+          <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
+            {budgets.length > 0 ? `${budgets.map(b => b.department.name).join(" & ")} budget${budgets.length > 1 ? "s" : ""}` : "Your budgets"} · {term.label}
+          </p>
+        </div>
+        <SemesterFilter activeKey={term.key} basePath="/officer/dashboard" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -102,7 +115,7 @@ export default async function OfficerDashboardPage() {
               const bAvail = bTotal - bSpent;
               const bPct = bTotal > 0 ? Math.round((bSpent / bTotal) * 100) : 0;
               return (
-                <Link key={b.id} href="/budgets" className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6 block hover:bg-[var(--color-surface-container-low)] transition-colors">
+                <Link key={b.id} href={`/budgets?term=${term.key}`} className="bg-[var(--color-surface-container-lowest)] rounded-2xl p-6 block hover:bg-[var(--color-surface-container-low)] transition-colors">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-widest text-[var(--color-on-surface-variant)] mb-1">

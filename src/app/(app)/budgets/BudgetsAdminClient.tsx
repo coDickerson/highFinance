@@ -6,6 +6,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EditBudgetForm } from "./EditBudgetForm";
 import { CreateBudgetForm } from "./CreateBudgetForm";
+import { SemesterFilter } from "@/components/ui/SemesterFilter";
 import { deleteBudget } from "./actions";
 
 interface Transaction {
@@ -33,13 +34,14 @@ interface Props {
   budgets: BudgetItem[];
   departments: { id: string; name: string }[];
   isAdmin: boolean;
+  activeTermKey: string;
 }
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-export function BudgetsAdminClient({ budgets, departments, isAdmin }: Props) {
+export function BudgetsAdminClient({ budgets, departments, isAdmin, activeTermKey }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -213,9 +215,12 @@ export function BudgetsAdminClient({ budgets, departments, isAdmin }: Props) {
               Active budgets across all positions
             </p>
           </div>
-          {isAdmin && (
-            <CreateBudgetForm departments={departments} />
-          )}
+          <div className="flex items-center gap-3">
+            <SemesterFilter activeKey={activeTermKey} basePath="/budgets" />
+            {isAdmin && (
+              <CreateBudgetForm departments={departments} />
+            )}
+          </div>
         </div>
 
         {budgets.length === 0 ? (

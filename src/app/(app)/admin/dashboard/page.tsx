@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { SpendingToggleChart } from "@/components/ui/SpendingToggleChart";
-import { getCurrentSemester, getCalendarYear } from "@/lib/semester";
 import { getPositionBudgetsCached } from "@/lib/ledger";
+import { resolveTerm } from "@/lib/term";
+import { SemesterFilter } from "@/components/ui/SemesterFilter";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -21,30 +22,33 @@ function relativeTime(date: Date): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ term?: string }>;
+}) {
   const session = await auth();
   if (!session || !hasMinRole(session.user.role, "admin")) redirect("/dashboard");
 
-  const semester = getCurrentSemester();
-  const calYear = getCalendarYear();
+  const term = resolveTerm((await searchParams).term);
 
-  const calYearBudgets = await prisma.budget.findMany({
-    where: { year: calYear.year },
+  const termBudgets = await prisma.budget.findMany({
+    where: { semester: term.semester, year: term.year },
     include: { transactions: { where: { status: "approved" } } },
   });
 
   // Allocated total comes from the spreadsheet (source of truth), so it matches
   // the Budgets page; spend is computed from the app's own transactions.
   const positionBudgets = await getPositionBudgetsCached();
-  const calYearAllocated = positionBudgets.reduce((sum, p) => sum + p.planned, 0);
-  const calYearSpent = calYearBudgets.reduce(
+  const termAllocated = positionBudgets.reduce((sum, p) => sum + p.planned, 0);
+  const termSpent = termBudgets.reduce(
     (sum, b) =>
       sum + b.transactions.reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
     0
   );
-  const calYearPct =
-    calYearAllocated > 0
-      ? Math.round((calYearSpent / calYearAllocated) * 100)
+  const termPct =
+    termAllocated > 0
+      ? Math.round((termSpent / termAllocated) * 100)
       : 0;
 
   const [
@@ -143,48 +147,51 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
-          Admin Command Center
-        </h2>
-        <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-          {`${semester} budget & request overview`}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-2xl font-extrabold tracking-tight text-[var(--color-on-surface)]">
+            Admin Command Center
+          </h2>
+          <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
+            {`${term.label} budget & request overview`}
+          </p>
+        </div>
+        <SemesterFilter activeKey={term.key} basePath="/admin/dashboard" />
       </div>
 
       {/* Calendar Year Budget Hero */}
       <Link
-        href="/budgets"
+        href={`/budgets?term=${term.key}`}
         className="rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
         style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
       >
         <div className="flex items-start justify-between mb-1">
           <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">
-            {calYear.label} Calendar Year Budget
+            {term.label} Budget
           </p>
           <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
-            SP{String(calYear.year).slice(2)} + FA{String(calYear.year).slice(2)}
+            {term.short}
           </span>
         </div>
         <div className="flex items-end justify-between mb-4 mt-2">
           <div>
             <p className="text-white/50 text-xs mb-0.5">Total Allocated</p>
-            <p className="font-display text-4xl font-extrabold">{fmt(calYearAllocated)}</p>
+            <p className="font-display text-4xl font-extrabold">{fmt(termAllocated)}</p>
           </div>
           <div className="text-right">
             <p className="text-white/50 text-xs mb-0.5">Spent</p>
-            <p className="font-display text-2xl font-bold text-white/70">{fmt(calYearSpent)}</p>
+            <p className="font-display text-2xl font-bold text-white/70">{fmt(termSpent)}</p>
           </div>
         </div>
         <div className="w-full h-2 rounded-full bg-white/20 mb-2">
           <div
             className="h-full rounded-full bg-[var(--color-secondary-container)]"
-            style={{ width: `${Math.min(calYearPct, 100)}%` }}
+            style={{ width: `${Math.min(termPct, 100)}%` }}
           />
         </div>
         <div className="flex justify-between text-xs text-white/50">
-          <span>{calYearPct}% utilized · {fmt(calYearAllocated - calYearSpent)} remaining</span>
-          <span>{calYearBudgets.length} budget{calYearBudgets.length !== 1 ? "s" : ""} · View Budgets →</span>
+          <span>{termPct}% utilized · {fmt(termAllocated - termSpent)} remaining</span>
+          <span>{termBudgets.length} budget{termBudgets.length !== 1 ? "s" : ""} · View Budgets →</span>
         </div>
       </Link>
 
