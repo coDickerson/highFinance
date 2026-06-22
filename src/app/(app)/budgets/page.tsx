@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getPlannedBudgetMap, resolvePosition } from "@/lib/ledger";
+import { resolveTerm, DEFAULT_TERM } from "@/lib/term";
 import { BudgetsAdminClient } from "./BudgetsAdminClient";
 import Link from "next/link";
 
@@ -16,12 +17,19 @@ function semesterLabel(s: string, y: number) {
   return `${s === "fall" ? "FA" : "SP"}${String(y).slice(2)}`;
 }
 
-export default async function BudgetsPage() {
+export default async function BudgetsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ term?: string }>;
+}) {
   const session = await auth();
   if (!session) redirect("/login");
 
   const isExecOrAbove = hasMinRole(session.user.role, "executive");
   const isAdmin = hasMinRole(session.user.role, "admin");
+
+  // Semester switching is admin-only for now; everyone else is pinned to FA26.
+  const term = isAdmin ? resolveTerm((await searchParams).term) : DEFAULT_TERM;
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     include: { department: true },
@@ -41,7 +49,7 @@ export default async function BudgetsPage() {
     const departments = await prisma.department.findMany({
       include: {
         budgets: {
-          where: { status: "active" },
+          where: { status: "active", semester: term.semester, year: term.year },
           include: { transactions: { orderBy: { date: "desc" } } },
           orderBy: [{ year: "desc" }, { semester: "desc" }],
           take: 1,
@@ -81,14 +89,24 @@ export default async function BudgetsPage() {
       : [];
 
     return (
-      <BudgetsAdminClient budgets={budgets} departments={allDepts} isAdmin={isAdmin} />
+      <BudgetsAdminClient
+        budgets={budgets}
+        departments={allDepts}
+        isAdmin={isAdmin}
+        activeTermKey={term.key}
+      />
     );
   }
 
   // ── Officer: expanded single-budget view ────────────────────────────────────
   const budget = user?.departmentId
     ? await prisma.budget.findFirst({
-        where: { departmentId: user.departmentId, status: "active" },
+        where: {
+          departmentId: user.departmentId,
+          status: "active",
+          semester: term.semester,
+          year: term.year,
+        },
         include: {
           department: true,
           transactions: {
@@ -112,9 +130,11 @@ export default async function BudgetsPage() {
           <span className="material-symbols-outlined text-[var(--color-on-surface-variant)] text-4xl mb-3 block">
             account_balance_wallet
           </span>
-          <p className="text-[var(--color-on-surface)] font-medium mb-1">No active budget assigned</p>
+          <p className="text-[var(--color-on-surface)] font-medium mb-1">
+            No active budget for {term.label}
+          </p>
           <p className="text-[var(--color-on-surface-variant)] text-sm">
-            Contact your treasurer to set up your FA26 budget.
+            Contact your treasurer to set up your {term.short} budget.
           </p>
         </div>
       </div>

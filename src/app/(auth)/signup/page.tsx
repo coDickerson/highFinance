@@ -1,6 +1,10 @@
 import { SignupForm } from "@/components/forms/SignupForm";
 import { prisma } from "@/lib/db";
 
+// Department list is live data, so render at request time rather than
+// prerendering at build (which would require DB access during `next build`).
+export const dynamic = "force-dynamic";
+
 export default async function SignupPage() {
   const departments = await prisma.department.findMany({
     orderBy: { name: "asc" },
@@ -36,7 +40,7 @@ export default async function SignupPage() {
               Join the<br />organization.
             </h2>
             <p className="text-white/60 text-base leading-relaxed max-w-sm">
-              Submit your membership request for admin review. Once approved, you'll have access to your department's treasury workspace.
+              Submit your membership request for admin review. Once approved, you&apos;ll have access to your department&apos;s treasury workspace.
             </p>
           </div>
 

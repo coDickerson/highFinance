@@ -4,7 +4,8 @@ import { hasMinRole } from "@/lib/permissions";
 import { prisma } from "@/lib/db";
 import { BudgetCard } from "@/components/ui/BudgetCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { getCurrentSemester, getCalendarYear } from "@/lib/semester";
+import { getPlannedBudgetMap, getPositionBudgetsCached, resolvePosition } from "@/lib/ledger";
+import { DEFAULT_TERM } from "@/lib/term";
 import Link from "next/link";
 
 function fmt(n: number) {
@@ -15,17 +16,29 @@ export default async function ExecutiveDashboardPage() {
   const session = await auth();
   if (!session || !hasMinRole(session.user.role, "executive")) redirect("/dashboard");
 
-  const semester = getCurrentSemester();
-  const calYear = getCalendarYear();
+  // Pinned to FA26 for now; semester switching is admin-only.
+  const term = DEFAULT_TERM;
 
-  const departments = await prisma.department.findMany({
-    include: {
-      budgets: {
-        where: { status: "active" },
-        include: { transactions: true },
+  // Budget totals come from the spreadsheet (source of truth), matching the
+  // Budgets page; spend is computed from the app's own transactions.
+  const [departments, plannedMap, positionBudgets] = await Promise.all([
+    prisma.department.findMany({
+      include: {
+        budgets: {
+          where: { status: "active", semester: term.semester, year: term.year },
+          include: { transactions: true },
+        },
       },
-    },
-  });
+    }),
+    getPlannedBudgetMap(),
+    getPositionBudgetsCached(),
+  ]);
+
+  const sheetTotal = (deptName: string, dbAmount: number) => {
+    const pos = resolvePosition(deptName);
+    const planned = pos ? plannedMap.get(pos) : undefined;
+    return planned && planned > 0 ? planned : dbAmount;
+  };
 
   const allBudgets = departments.flatMap((d) =>
     d.budgets.map((b) => {
@@ -37,26 +50,16 @@ export default async function ExecutiveDashboardPage() {
         name: d.name,
         description: d.description ?? undefined,
         colorHex: d.colorHex,
-        totalAmount: Number(b.totalAmount),
+        totalAmount: sheetTotal(d.name, Number(b.totalAmount)),
         spent,
         transactionCount: b.transactions.length,
       };
     })
   );
 
-  const totalAssets = allBudgets.reduce((s, b) => s + b.totalAmount, 0);
-  const totalSpent = allBudgets.reduce((s, b) => s + b.spent, 0);
-
-  const calYearBudgets = await prisma.budget.findMany({
-    where: { year: calYear.year },
-    include: { transactions: { where: { status: "approved" } } },
-  });
-  const calYearAllocated = calYearBudgets.reduce((s, b) => s + Number(b.totalAmount), 0);
-  const calYearSpent = calYearBudgets.reduce(
-    (s, b) => s + b.transactions.reduce((ts, t) => ts + Math.abs(Number(t.amount)), 0),
-    0
-  );
-  const calYearPct = calYearAllocated > 0 ? Math.round((calYearSpent / calYearAllocated) * 100) : 0;
+  const termAllocated = positionBudgets.reduce((s, p) => s + p.planned, 0);
+  const termSpent = allBudgets.reduce((s, b) => s + b.spent, 0);
+  const termPct = termAllocated > 0 ? Math.round((termSpent / termAllocated) * 100) : 0;
 
   const pendingApprovals = await prisma.reimbursementRequest.findMany({
     where: { status: "pending" },
@@ -76,7 +79,7 @@ export default async function ExecutiveDashboardPage() {
             Executive Overview
           </h2>
           <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-            Real-time treasury metrics · {semester}
+            Real-time treasury metrics · {term.label}
           </p>
         </div>
         <Link
@@ -89,7 +92,7 @@ export default async function ExecutiveDashboardPage() {
         </Link>
       </div>
 
-      {/* Calendar Year Budget Hero */}
+      {/* Term Budget Hero */}
       <Link
         href="/budgets"
         className="rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
@@ -97,31 +100,31 @@ export default async function ExecutiveDashboardPage() {
       >
         <div className="flex items-start justify-between mb-1">
           <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">
-            {calYear.label} Calendar Year Budget
+            {term.label} Budget
           </p>
           <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white/60">
-            SP{String(calYear.year).slice(2)} + FA{String(calYear.year).slice(2)}
+            {term.short}
           </span>
         </div>
         <div className="flex items-end justify-between mb-4 mt-2">
           <div>
             <p className="text-white/50 text-xs mb-0.5">Total Allocated</p>
-            <p className="font-display text-4xl font-extrabold">{fmt(calYearAllocated)}</p>
+            <p className="font-display text-4xl font-extrabold">{fmt(termAllocated)}</p>
           </div>
           <div className="text-right">
             <p className="text-white/50 text-xs mb-0.5">Spent</p>
-            <p className="font-display text-2xl font-bold text-white/70">{fmt(calYearSpent)}</p>
+            <p className="font-display text-2xl font-bold text-white/70">{fmt(termSpent)}</p>
           </div>
         </div>
         <div className="w-full h-2 rounded-full bg-white/20 mb-2">
           <div
             className="h-full rounded-full bg-[var(--color-secondary-container)]"
-            style={{ width: `${Math.min(calYearPct, 100)}%` }}
+            style={{ width: `${Math.min(termPct, 100)}%` }}
           />
         </div>
         <div className="flex justify-between text-xs text-white/50">
-          <span>{calYearPct}% utilized · {fmt(calYearAllocated - calYearSpent)} remaining</span>
-          <span>{calYearBudgets.length} budget{calYearBudgets.length !== 1 ? "s" : ""} · View Budgets →</span>
+          <span>{termPct}% utilized · {fmt(termAllocated - termSpent)} remaining</span>
+          <span>{allBudgets.length} budget{allBudgets.length !== 1 ? "s" : ""} · View Budgets →</span>
         </div>
       </Link>
 

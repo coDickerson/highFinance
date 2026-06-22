@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { BudgetCard } from "@/components/ui/BudgetCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EditBudgetForm } from "./EditBudgetForm";
 import { CreateBudgetForm } from "./CreateBudgetForm";
+import { SemesterFilter } from "@/components/ui/SemesterFilter";
 import { deleteBudget } from "./actions";
 
 interface Transaction {
@@ -33,27 +33,27 @@ interface Props {
   budgets: BudgetItem[];
   departments: { id: string; name: string }[];
   isAdmin: boolean;
+  activeTermKey: string;
 }
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-export function BudgetsAdminClient({ budgets, departments, isAdmin }: Props) {
+export function BudgetsAdminClient({ budgets, departments, isAdmin, activeTermKey }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const selected = budgets.find((b) => b.id === selectedId) ?? null;
 
-  // Trigger enter animation after mount
+  // Trigger enter animation after the drawer opens. The exit animation is
+  // driven by close(), which sets mounted=false before clearing selectedId, so
+  // no reset is needed here.
   useEffect(() => {
-    if (selectedId) {
-      const t = setTimeout(() => setMounted(true), 10);
-      return () => clearTimeout(t);
-    } else {
-      setMounted(false);
-    }
+    if (!selectedId) return;
+    const t = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(t);
   }, [selectedId]);
 
   function open(id: string) {
@@ -181,14 +181,11 @@ export function BudgetsAdminClient({ budgets, departments, isAdmin }: Props) {
               </div>
             </div>
 
-            {/* Drawer footer — admin actions */}
+            {/* Drawer footer — admin actions.
+                Budget amounts are edited in the spreadsheet (source of truth),
+                so there is no in-app edit; delete remains. */}
             {isAdmin && selected && (
               <div className="flex-shrink-0 border-t border-[var(--color-outline-variant)] p-6 flex items-center gap-3">
-                <EditBudgetForm
-                  id={selected.id}
-                  currentName={selected.name}
-                  currentTotal={selected.totalAmount}
-                />
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
@@ -214,9 +211,13 @@ export function BudgetsAdminClient({ budgets, departments, isAdmin }: Props) {
               Active budgets across all positions
             </p>
           </div>
-          {isAdmin && (
-            <CreateBudgetForm departments={departments} />
-          )}
+          <div className="flex items-center gap-3">
+            {/* Semester switcher is admin-only for now; officers/exec see FA26. */}
+            {isAdmin && <SemesterFilter activeKey={activeTermKey} basePath="/budgets" />}
+            {isAdmin && (
+              <CreateBudgetForm departments={departments} />
+            )}
+          </div>
         </div>
 
         {budgets.length === 0 ? (

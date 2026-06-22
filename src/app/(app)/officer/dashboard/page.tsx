@@ -4,8 +4,8 @@ import { prisma } from "@/lib/db";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { MetricCard } from "@/components/ui/MetricCard";
-import { getCurrentSemester } from "@/lib/semester";
 import { getPlannedBudgetMap, resolvePosition } from "@/lib/ledger";
+import { DEFAULT_TERM } from "@/lib/term";
 import Link from "next/link";
 function fmt(n: { toFixed?: (d: number) => string } | number | string) {
   return Number(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -15,7 +15,8 @@ export default async function OfficerDashboardPage() {
   const session = await auth();
   if (!session) redirect("/login");
 
-  const semester = getCurrentSemester();
+  // Pinned to FA26 for now; semester switching is admin-only.
+  const term = DEFAULT_TERM;
 
   // Fetch all departments this officer is assigned to (primary + extra)
   const user = await prisma.user.findUnique({
@@ -37,7 +38,12 @@ export default async function OfficerDashboardPage() {
 
   const budgets = deptIds.length > 0
     ? await prisma.budget.findMany({
-        where: { departmentId: { in: deptIds }, status: "active" },
+        where: {
+          departmentId: { in: deptIds },
+          status: "active",
+          semester: term.semester,
+          year: term.year,
+        },
         orderBy: [{ year: "desc" }, { semester: "desc" }],
         include: {
           department: true,
@@ -82,7 +88,7 @@ export default async function OfficerDashboardPage() {
           Welcome back, {session.user.name?.split(" ")[0]}
         </h2>
         <p className="text-[var(--color-on-surface-variant)] text-sm mt-0.5">
-          {budgets.length > 0 ? `${budgets.map(b => b.department.name).join(" & ")} budget${budgets.length > 1 ? "s" : ""}` : "Your budgets"} · {semester}
+          {budgets.length > 0 ? `${budgets.map(b => b.department.name).join(" & ")} budget${budgets.length > 1 ? "s" : ""}` : "Your budgets"} · {term.label}
         </p>
       </div>
 
