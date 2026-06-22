@@ -5,23 +5,19 @@ import { prisma } from "@/lib/db";
 import { BudgetCard } from "@/components/ui/BudgetCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { getPlannedBudgetMap, getPositionBudgetsCached, resolvePosition } from "@/lib/ledger";
-import { resolveTerm } from "@/lib/term";
-import { SemesterFilter } from "@/components/ui/SemesterFilter";
+import { DEFAULT_TERM } from "@/lib/term";
 import Link from "next/link";
 
 function fmt(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
 
-export default async function ExecutiveDashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ term?: string }>;
-}) {
+export default async function ExecutiveDashboardPage() {
   const session = await auth();
   if (!session || !hasMinRole(session.user.role, "executive")) redirect("/dashboard");
 
-  const term = resolveTerm((await searchParams).term);
+  // Pinned to FA26 for now; semester switching is admin-only.
+  const term = DEFAULT_TERM;
 
   // Budget totals come from the spreadsheet (source of truth), matching the
   // Budgets page; spend is computed from the app's own transactions.
@@ -86,22 +82,19 @@ export default async function ExecutiveDashboardPage({
             Real-time treasury metrics · {term.label}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <SemesterFilter activeKey={term.key} basePath="/executive/dashboard" />
-          <Link
-            href="/transactions/new"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors"
-            style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
-          >
-            <span className="material-symbols-outlined text-[16px]">add</span>
-            Add Receipt
-          </Link>
-        </div>
+        <Link
+          href="/transactions/new"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors"
+          style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
+        >
+          <span className="material-symbols-outlined text-[16px]">add</span>
+          Add Receipt
+        </Link>
       </div>
 
       {/* Term Budget Hero */}
       <Link
-        href={`/budgets?term=${term.key}`}
+        href="/budgets"
         className="rounded-2xl p-6 text-white block hover:opacity-90 transition-opacity"
         style={{ background: "linear-gradient(135deg, #000000 0%, #111111 100%)" }}
       >

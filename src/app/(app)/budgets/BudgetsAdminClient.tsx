@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { BudgetCard } from "@/components/ui/BudgetCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EditBudgetForm } from "./EditBudgetForm";
 import { CreateBudgetForm } from "./CreateBudgetForm";
 import { SemesterFilter } from "@/components/ui/SemesterFilter";
 import { deleteBudget } from "./actions";
@@ -182,14 +181,11 @@ export function BudgetsAdminClient({ budgets, departments, isAdmin, activeTermKe
               </div>
             </div>
 
-            {/* Drawer footer — admin actions */}
+            {/* Drawer footer — admin actions.
+                Budget amounts are edited in the spreadsheet (source of truth),
+                so there is no in-app edit; delete remains. */}
             {isAdmin && selected && (
               <div className="flex-shrink-0 border-t border-[var(--color-outline-variant)] p-6 flex items-center gap-3">
-                <EditBudgetForm
-                  id={selected.id}
-                  currentName={selected.name}
-                  currentTotal={selected.totalAmount}
-                />
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
@@ -216,7 +212,8 @@ export function BudgetsAdminClient({ budgets, departments, isAdmin, activeTermKe
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <SemesterFilter activeKey={activeTermKey} basePath="/budgets" />
+            {/* Semester switcher is admin-only for now; officers/exec see FA26. */}
+            {isAdmin && <SemesterFilter activeKey={activeTermKey} basePath="/budgets" />}
             {isAdmin && (
               <CreateBudgetForm departments={departments} />
             )}
