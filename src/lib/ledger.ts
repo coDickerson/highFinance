@@ -1,6 +1,8 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { readRange, appendRows, writeRange, batchRead } from "./sheets";
+import { isDemoMode } from "./demo";
+import { DEMO_POSITION_BUDGETS, DEMO_FEES_AND_INCOME, DEMO_ROSTER } from "./ledger-demo";
 
 /**
  * Domain mapping between the app and the "FA26 Budget & Roster" spreadsheet.
@@ -97,6 +99,7 @@ export type PositionBudget = {
 
 /** Read planned / spent / remaining for every officer position. */
 export async function getPositionBudgets(): Promise<PositionBudget[]> {
+  if (isDemoMode()) return DEMO_POSITION_BUDGETS;
   const [planned, spent, remaining] = await batchRead([
     `${ALLOC_TAB}!A${PLANNED_TOTAL_ROW}:AB${PLANNED_TOTAL_ROW}`,
     `${ALLOC_TAB}!A${TRACKING_TOTAL_ROW}:AB${TRACKING_TOTAL_ROW}`,
@@ -131,6 +134,7 @@ export const getPositionBudgetsCached = unstable_cache(
 
 /** Cached map of sheet position → planned budget total (from Officer Allocations row 13). */
 export async function getPlannedBudgetMap(): Promise<Map<string, number>> {
+  if (isDemoMode()) return new Map(DEMO_POSITION_BUDGETS.map((b) => [b.position, b.planned]));
   const list = await getPositionBudgetsCached();
   return new Map(list.map((b) => [b.position, b.planned]));
 }
@@ -161,6 +165,7 @@ export async function getFeesAndIncome(): Promise<{
   income: FeeIncomeLine[];
   expenses: FeeIncomeLine[];
 }> {
+  if (isDemoMode()) return DEMO_FEES_AND_INCOME;
   const [income, expenses] = await batchRead([
     "Overview!A5:E18",
     "Overview!A23:E36",
@@ -189,6 +194,7 @@ export type RosterEntry = {
 
 /** Read the member roster + dues status from the Dues tab. */
 export async function getRoster(): Promise<RosterEntry[]> {
+  if (isDemoMode()) return DEMO_ROSTER;
   const rows = await readRange("Dues!A3:F200");
   return rows
     .filter((r) => r && String(r[0] ?? "").trim() !== "")
@@ -227,6 +233,7 @@ export type ReimbursementRow = {
 
 /** Append a reimbursement to the Reimbursements tab (columns A–M). */
 export async function appendReimbursement(r: ReimbursementRow): Promise<void> {
+  if (isDemoMode()) return;
   await appendRows(REIMB_TAB, [
     [
       new Date().toLocaleString("en-US"),
@@ -254,6 +261,7 @@ export async function updateReimbursementStatus(
   requestId: string,
   status: string
 ): Promise<boolean> {
+  if (isDemoMode()) return true;
   const ids = await readRange(`${REIMB_TAB}!${REIMB_ID_COL}2:${REIMB_ID_COL}`);
   const idx = ids.findIndex((r) => String(r?.[0] ?? "") === requestId);
   if (idx === -1) return false;
@@ -277,6 +285,7 @@ export type RosterSignupRow = {
 
 /** Append a new-member signup to the Roster Form tab (columns A–K). */
 export async function appendRosterSignup(r: RosterSignupRow): Promise<void> {
+  if (isDemoMode()) return;
   await appendRows("Roster Form", [
     [
       new Date().toLocaleString("en-US"),
@@ -305,6 +314,7 @@ export async function recordSpend(
   amount: number,
   description?: string
 ): Promise<string | null> {
+  if (isDemoMode()) return null;
   const col = POSITION_COLUMN[position];
   if (!col) return null;
 
