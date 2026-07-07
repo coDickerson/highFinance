@@ -15,10 +15,12 @@ export default async function AppLayout({
   if (!session) redirect("/login");
 
   const role = session.user.role;
+  // In demo mode the banner is fixed to the bottom; give desktop a little extra
+  // bottom room so it never covers content. Real app spacing is unchanged.
+  const demo = process.env.NEXT_PUBLIC_DEMO_MODE === "1";
 
   return (
     <>
-      <DemoBanner />
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
@@ -27,10 +29,11 @@ export default async function AppLayout({
       <MobileNav role={role} />
       <div className="md:ml-64 min-h-screen flex flex-col">
         <TopHeader />
-        <main className="flex-1 pt-16 pb-24 md:pb-0 bg-[var(--color-surface-container-low)]">
+        <main className={`flex-1 pt-16 pb-24 ${demo ? "md:pb-8" : "md:pb-0"} bg-[var(--color-surface-container-low)]`}>
           <div className="max-w-[1700px] mx-auto p-4 md:p-6 xl:px-8 2xl:px-10">{children}</div>
         </main>
       </div>
+      <DemoBanner />
     </>
   );
 }
