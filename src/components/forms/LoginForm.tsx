@@ -31,6 +31,24 @@ export function LoginForm() {
     }
   }
 
+  const demo = process.env.NEXT_PUBLIC_DEMO_MODE === "1";
+
+  async function demoLogin(demoEmail: string, demoPassword: string) {
+    setLoading(true);
+    setError("");
+    const result = await signIn("credentials", {
+      email: demoEmail,
+      password: demoPassword,
+      redirect: false,
+    });
+    if (result?.error) {
+      setError("Demo login failed. The demo may be resetting — try again in a moment.");
+      setLoading(false);
+    } else {
+      router.push("/dashboard");
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
@@ -85,13 +103,31 @@ export function LoginForm() {
         </Link>
       </p>
 
-      {/* Demo credentials hint */}
-      <div className="mt-4 rounded-xl bg-[var(--color-surface-container)] p-4 text-xs text-[var(--color-on-surface-variant)] space-y-1">
-        <p className="font-semibold text-[var(--color-on-surface)] mb-2">Demo Credentials</p>
-        <p>Admin: <span className="font-mono">admin@highfinance.test</span> / <span className="font-mono">Admin1234</span></p>
-        <p>Executive: <span className="font-mono">exec@highfinance.test</span> / <span className="font-mono">Exec1234</span></p>
-        <p>Officer: <span className="font-mono">social@highfinance.test</span> / <span className="font-mono">Officer1234</span></p>
-      </div>
+      {demo && (
+        <div className="mt-4 space-y-2">
+          <p className="text-center text-xs text-[var(--color-on-surface-variant)]">
+            Explore instantly — no password needed
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => demoLogin("social@highfinance.test", "Officer1234")}
+              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] transition-colors hover:bg-[var(--color-surface-container-highest)] disabled:opacity-60"
+            >
+              Try as Officer
+            </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => demoLogin("admin@highfinance.test", "Admin1234")}
+              className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)] transition-colors hover:bg-[var(--color-surface-container-highest)] disabled:opacity-60"
+            >
+              Try as Admin
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
