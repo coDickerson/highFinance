@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { TopHeader } from "@/components/layout/TopHeader";
+import { DemoBanner } from "@/components/DemoBanner";
 
 // Material Symbols font loaded via link tag in layout
 export default async function AppLayout({
@@ -17,6 +18,7 @@ export default async function AppLayout({
 
   return (
     <>
+      <DemoBanner />
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
