@@ -6,12 +6,18 @@ import { reseedDemo } from "@/lib/demo-seed";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-/** Authorized if it's a Vercel Cron call (Bearer CRON_SECRET) or a manual call with ?secret=DEMO_RESET_SECRET. */
+/**
+ * Authorized via the `Authorization: Bearer <token>` header only (never a URL
+ * query param, so the secret can't leak into logs/history/referrers). Accepts
+ * either CRON_SECRET (Vercel Cron sends this automatically) or DEMO_RESET_SECRET
+ * (for manual `curl -H "Authorization: Bearer ..."` triggers).
+ */
 function authorized(req: Request): boolean {
   const authHeader = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
-  const s = new URL(req.url).searchParams.get("secret");
-  if (process.env.DEMO_RESET_SECRET && s === process.env.DEMO_RESET_SECRET) return true;
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const token = authHeader.slice("Bearer ".length);
+  if (process.env.CRON_SECRET && token === process.env.CRON_SECRET) return true;
+  if (process.env.DEMO_RESET_SECRET && token === process.env.DEMO_RESET_SECRET) return true;
   return false;
 }
 
